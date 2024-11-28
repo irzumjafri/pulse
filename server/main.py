@@ -18,7 +18,10 @@ Answer:
 """
 
 # Initialize the model from OllamaLLM
-model = OllamaLLM(model="llama3.2")
+#model = OllamaLLM(model="llama3.2")
+#Finglish Model
+model = OllamaLLM(model="openintegrator/poro-34b-chat")
+
 prompt = ChatPromptTemplate.from_template(template)
 chain = prompt | model
 
