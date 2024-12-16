@@ -1,0 +1,31 @@
+Patient Name,Room Number,Condition,Diagnosis,Undergoing Treatments,Assigned Nurse (Number only)
+John Doe,115,Critical,Migraine,Insulin Therapy,117
+Mia Clark,101,Recovering,Fracture,IV Therapy,111
+Ella Baker,121,Critical,Hypertension,Oxygen Support,114
+Emma Wilson,118,Critical,COVID-19,Physiotherapy,102
+Charlie Davis,102,Critical,Diabetes,Physiotherapy,108
+Michael Wright,138,Critical,Hypertension,Physiotherapy,106
+Jane Smith,123,Under Observation,Hypertension,Surgery,104
+Ava Scott,138,Recovering,COVID-19,Physiotherapy,129
+Chloe Mitchell,127,Recovering,Pneumonia,Physiotherapy,102
+Charlotte Young,124,Critical,Hypertension,IV Therapy,106
+Michael Wright,124,Critical,Asthma,IV Therapy,122
+Benjamin White,138,Under Observation,Fracture,Oxygen Support,121
+Charlotte Young,120,Critical,Hypertension,IV Therapy,117
+James Taylor,150,Stable,Pneumonia,Physiotherapy,109
+James Taylor,112,Critical,Heart Attack,Physiotherapy,110
+Charlotte Young,109,Under Observation,Fracture,Physiotherapy,100
+Charlotte Young,111,Under Observation,Diabetes,Physiotherapy,129
+Michael Wright,125,Recovering,Asthma,IV Therapy,108
+Ethan Hill,142,Stable,Fracture,Insulin Therapy,118
+John Doe,125,Under Observation,Diabetes,Insulin Therapy,113
+Matthew Perez,144,Critical,Diabetes,Oxygen Support,121
+Henry Hall,126,Recovering,Heart Attack,Insulin Therapy,101
+Daniel Campbell,136,Critical,Diabetes,Insulin Therapy,101
+James Taylor,137,Under Observation,Migraine,Oxygen Support,109
+Liam Harris,121,Recovering,Heart Attack,Antibiotics,128
+Chloe Mitchell,140,Recovering,Asthma,Surgery,119
+Benjamin White,107,Critical,COVID-19,Antibiotics,120
+Benjamin White,125,Stable,Asthma,Antibiotics,114
+Jane Smith,124,Stable,Hypertension,Surgery,101
+Grace Adams,121,Recovering,Hypertension,IV Therapy,124

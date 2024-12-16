@@ -1,221 +1,243 @@
 package com.solita.pulse
 
-import android.content.Intent
+import android.Manifest
 import android.os.Bundle
-import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
-import android.speech.RecognitionListener
-import android.speech.RecognitionService
-import android.util.Log
-import android.view.View
-import android.widget.EditText
-import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.android.volley.AuthFailureError
-import com.android.volley.DefaultRetryPolicy
-import com.android.volley.NetworkResponse
-import com.android.volley.Response
-import com.android.volley.RetryPolicy
-import com.android.volley.VolleyError
-import com.android.volley.toolbox.JsonObjectRequest
-import com.android.volley.toolbox.Volley
-import org.json.JSONArray
-import org.json.JSONException
+import android.speech.RecognizerIntent
+import android.content.Intent
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import com.solita.pulse.ui.theme.PulseTheme
+import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.util.Locale
+import java.util.*
 
+class MainActivity : ComponentActivity() {
 
-//import android.Manifest.permission.RECORD_AUDIO
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                println("Permission granted")
+            } else {
+                println("Permission for audio recording is required.")
+            }
+        }
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var textView: TextView
-    private lateinit var editText: EditText
-    private lateinit var textToSpeech: TextToSpeech
     private lateinit var speechRecognizer: SpeechRecognizer
-    private lateinit var intent: Intent
-    private val stringURLEndPoint = "https://api.openai.com/v1/chat/completions"
-    private val stringAPIKey = "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"
-    private var stringOutput = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_main)
 
-        ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
+        requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 
-        textView = findViewById(R.id.textView)
-        editText = findViewById(R.id.editText)
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
 
-        textToSpeech = TextToSpeech(applicationContext) {
-            textToSpeech!!.setLanguage(Locale.US)
-            textToSpeech!!.setSpeechRate(2.5.toFloat())
+        setContent {
+            PulseTheme {
+                VoiceAssistantApp(speechRecognizer = speechRecognizer)
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        speechRecognizer.destroy()
+    }
+}
+
+@Composable
+fun VoiceAssistantApp(speechRecognizer: SpeechRecognizer) {
+    var inputText by remember { mutableStateOf("Tap the microphone and start speaking...") }
+    var isLoading by remember { mutableStateOf(false) }
+    val chatHistory = remember { mutableStateListOf<Pair<String, String>>() }
+    val userId = remember { UUID.randomUUID().toString() }
+    val httpClient = remember { OkHttpClient() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val speechRecognitionListener = object : android.speech.RecognitionListener {
+        override fun onReadyForSpeech(params: Bundle?) {}
+        override fun onBeginningOfSpeech() {}
+        override fun onRmsChanged(rmsdB: Float) {}
+        override fun onBufferReceived(buffer: ByteArray?) {}
+        override fun onEndOfSpeech() {}
+        override fun onError(error: Int) {
+            inputText = "Error occurred while recognizing speech. Please try again."
         }
 
-        intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-        }
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-        speechRecognizer?.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                // Implement this method
-            }
+        override fun onResults(results: Bundle?) {
+            val spokenText = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.get(0)
+            inputText = spokenText ?: ""
+            chatHistory.add("You" to (spokenText ?: ""))
+            isLoading = true
 
-            override fun onBeginningOfSpeech() {
-                // Implement this method
-            }
-
-            override fun onRmsChanged(rmsdB: Float) {
-                // Implement this method
-            }
-
-            override fun onBufferReceived(buffer: ByteArray?) {
-                // Implement this method
-            }
-
-            override fun onEndOfSpeech() {
-                // Implement this method
-            }
-
-            override fun onError(error: Int) {
-                // Implement this method
-            }
-
-            override fun onResults(bundle: Bundle?) {
-                val matches: ArrayList<String>? = bundle?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                var string = ""
-
-                if (matches != null) {
-                    string = matches[0]
-                    editText.setText(string)
-                    chatGPTModel(string)
+            sendToServerAsync(httpClient, userId, spokenText ?: "") { response ->
+                coroutineScope.launch {
+                    chatHistory.add("Assistant" to response)
+                    isLoading = false
                 }
             }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                // Implement this method
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {
-                // Implement this method
-            }
-        })
-
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
         }
 
-
+        override fun onPartialResults(partialResults: Bundle?) {}
+        override fun onEvent(eventType: Int, params: Bundle?) {}
     }
 
-    fun buttonAssist(view: View) {
+    speechRecognizer.setRecognitionListener(speechRecognitionListener)
 
-        if (textToSpeech?.isSpeaking == true) {
-            textToSpeech?.stop()
-            return
+    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        if (chatHistory.isEmpty()) {
+            // Initial screen with centered microphone button and branding
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your logo resource ID
+                    contentDescription = "Pulse Logo",
+                    modifier = Modifier.size(128.dp).padding(bottom = 16.dp)
+                )
+
+                IconButton(
+                    onClick = {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(
+                                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                            )
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                        }
+                        speechRecognizer.startListening(intent)
+                    },
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Mic,
+                        contentDescription = "Start Speaking",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
+        } else {
+            // Chat UI with history
+            Column(
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(chatHistory) { message ->
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (message.first == "You") MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.secondaryContainer,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = "${message.first}: ${message.second}",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.padding(16.dp),
+                                textAlign = TextAlign.Start
+                            )
+                        }
+                    }
+                }
+
+                if (isLoading) {
+                    CircularProgressIndicator()
+                }
+
+                IconButton(
+                    onClick = {
+                        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                            putExtra(
+                                RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                                RecognizerIntent.LANGUAGE_MODEL_FREE_FORM
+                            )
+                            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+                        }
+                        speechRecognizer.startListening(intent)
+                    },
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Mic,
+                        contentDescription = "Start Speaking",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            }
         }
+    }
+}
 
-        stringOutput = ""
-        Log.d("ChatGPT", "Calling GPT")
-        Log.d("ChatGPT", stringOutput)
-        speechRecognizer.startListening(intent);
-
-
+fun sendToServerAsync(client: OkHttpClient, userId: String, message: String, callback: (String) -> Unit) {
+    val url = "http://10.0.2.2:5000/chat"
+    val json = JSONObject().apply {
+        put("user_id", userId)
+        put("message", message)
     }
 
+    val body = json.toString().toRequestBody("application/json".toMediaTypeOrNull())
+    val request = Request.Builder()
+        .url(url)
+        .post(body)
+        .build()
 
-    fun chatGPTModel(stringInput: String) {
-        // Show a "loading" message
-        textView.text = "In Progress..."
-
-        // Text-to-Speech initiation
-        textToSpeech?.speak(editText.text.toString(), TextToSpeech.QUEUE_FLUSH, null, null)
-
-        // Prepare JSON payload
-        val jsonObject = JSONObject()
+    Thread {
         try {
-            jsonObject.put("model", "gpt-3.5-turbo")
-
-            val jsonArrayMessage = JSONArray()
-            val jsonObjectMessage = JSONObject()
-            jsonObjectMessage.put("role", "user")
-            jsonObjectMessage.put("content", stringInput)
-
-            jsonArrayMessage.put(jsonObjectMessage)
-            jsonObject.put("messages", jsonArrayMessage)
-        } catch (e: JSONException) {
-            e.printStackTrace()
-        }
-
-        // Log the complete API request details
-        Log.d("ChatGPT Request", "URL: $stringURLEndPoint")
-        Log.d("ChatGPT Request", "Headers: Authorization=Bearer $stringAPIKey, Content-Type=application/json")
-        Log.d("ChatGPT Request", "Body: ${jsonObject.toString()}")
-
-        // Set up the network request
-        val jsonObjectRequest = object : JsonObjectRequest(Method.POST, stringURLEndPoint, jsonObject,
-            Response.Listener { response ->
-                try {
-                    // Parse the response
-                    val stringText = response.getJSONArray("choices")
-                        .getJSONObject(0)
-                        .getJSONObject("message")
-                        .getString("content")
-
-                    // Append and display response text
-                    stringOutput += stringText
-                    Log.d("ChatGPT", stringOutput)
-
-                    textView.text = stringOutput
-                    textToSpeech?.speak(stringOutput, TextToSpeech.QUEUE_FLUSH, null, null)
-
-                } catch (e: JSONException) {
-                    e.printStackTrace()
+            client.newCall(request).execute().use { response ->
+                val responseBody = response.body?.string()
+                if (response.isSuccessful && !responseBody.isNullOrBlank()) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val serverResponse = jsonResponse.optString("response", "No response")
+                    callback(serverResponse)
+                } else {
+                    callback("Error: ${response.code} - ${response.message}")
                 }
-            },
-            Response.ErrorListener { error ->
-                // Enhanced error logging
-                val errorMsg = error.message ?: "Unknown error"
-                val statusCode = error.networkResponse?.statusCode
-                val data = error.networkResponse?.data?.let { String(it) } // Convert error data to string if available
-
-                Log.e("ChatGPT", "Error: $errorMsg, Status Code: $statusCode, Response Data: $data")
-                textView.text = "Error occurred: $errorMsg, Status Code: $statusCode"
-            }) {
-
-            @Throws(AuthFailureError::class)
-            override fun getHeaders(): Map<String, String> {
-                val headers = HashMap<String, String>()
-                headers["Authorization"] = "Bearer $stringAPIKey"
-                headers["Content-Type"] = "application/json"
-                return headers
             }
-
-            override fun parseNetworkError(volleyError: VolleyError): VolleyError {
-                val responseData = volleyError.networkResponse?.data?.let { String(it) }
-                Log.e("ChatGPT", "Network error: ${volleyError.message}, Response data: $responseData")
-                return super.parseNetworkError(volleyError)
-            }
+        } catch (e: Exception) {
+            callback("Error: ${e.message}")
         }
+    }.start()
+}
 
-        // Set retry policy
-        jsonObjectRequest.retryPolicy = DefaultRetryPolicy(
-            60000, // 60 seconds
-            DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-            DefaultRetryPolicy.DEFAULT_BACKOFF_MULT
-        )
-
-        // Add the request to the request queue
-        Volley.newRequestQueue(applicationContext).add(jsonObjectRequest)
+@Preview(showBackground = true)
+@Composable
+fun VoiceInputAppPreview() {
+    PulseTheme {
+        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null))
     }
-
 }
