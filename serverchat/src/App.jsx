@@ -7,6 +7,7 @@ const App = () => {
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState({}); // Store chat history by user
   const [users, setUsers] = useState(["user1", "user2"]); // List of users
+  const [isSending, setIsSending] = useState(false); // Animation state
   const chatWindowRef = useRef(null);
 
   // Update message input
@@ -15,6 +16,8 @@ const App = () => {
   // Handle sending the message
   const handleSendMessage = async () => {
     if (!message) return;
+
+    setIsSending(true); // Show sending animation
 
     try {
       const res = await axios.post("http://localhost:5000/chat", {
@@ -33,6 +36,8 @@ const App = () => {
       setMessage(""); // Clear input
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setIsSending(false); // Hide sending animation
     }
   };
 
@@ -134,8 +139,9 @@ const App = () => {
             onChange={handleMessageChange}
             onKeyPress={handleKeyPress}
           />
-          <button onClick={handleSendMessage}>Send</button>
+          <button onClick={handleSendMessage} disabled={isSending}>Send</button>
           <button onClick={handleVoiceInput}>🎤 Voice Input</button>
+          {isSending && <div className="sending-animation">Sending...</div>}
         </div>
       </div>
     </div>

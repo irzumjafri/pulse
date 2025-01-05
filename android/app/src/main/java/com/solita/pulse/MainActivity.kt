@@ -4,14 +4,18 @@ import android.Manifest
 import android.os.Bundle
 import android.speech.SpeechRecognizer
 import android.speech.RecognizerIntent
+import android.speech.tts.TextToSpeech
+import android.util.Log
 import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Mic
@@ -31,11 +35,19 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.*
+import java.util.concurrent.TimeUnit
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
-    private val requestPermissionLauncher =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var speechRecognizer: SpeechRecognizer
+    private lateinit var textToSpeech: TextToSpeech
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        // Initialize the permission launcher
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
                 println("Permission granted")
             } else {
@@ -43,36 +55,64 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-    private lateinit var speechRecognizer: SpeechRecognizer
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
+        // Request the permission
         requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        textToSpeech = TextToSpeech(this, this)
 
         setContent {
             PulseTheme {
-                VoiceAssistantApp(speechRecognizer = speechRecognizer)
+                VoiceAssistantApp(speechRecognizer = speechRecognizer, textToSpeech = textToSpeech)
             }
+        }
+    }
+
+    override fun onInit(status: Int) {
+        if (status == TextToSpeech.SUCCESS) {
+            val langResult = textToSpeech.setLanguage(Locale.getDefault())
+            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
+                Log.e("TextToSpeech", "Language is not supported or missing data.")
+            } else {
+                Log.i("TextToSpeech", "Text-to-Speech initialized successfully.")
+            }
+        } else {
+            Log.e("TextToSpeech", "Initialization failed.")
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
         speechRecognizer.destroy()
+        textToSpeech.shutdown()
     }
 }
 
 @Composable
-fun VoiceAssistantApp(speechRecognizer: SpeechRecognizer) {
+fun VoiceAssistantApp(
+    speechRecognizer: SpeechRecognizer,
+    textToSpeech: TextToSpeech
+) {
     var inputText by remember { mutableStateOf("Tap the microphone and start speaking...") }
     var isLoading by remember { mutableStateOf(false) }
     val chatHistory = remember { mutableStateListOf<Pair<String, String>>() }
     val userId = remember { UUID.randomUUID().toString() }
-    val httpClient = remember { OkHttpClient() }
+
+    // Custom OkHttpClient with increased timeout
+    val httpClient = remember {
+        OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
     val coroutineScope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+
+    // Scroll to the bottom when chat history changes
+    LaunchedEffect(chatHistory.size) {
+        listState.animateScrollToItem(chatHistory.size)
+    }
 
     val speechRecognitionListener = object : android.speech.RecognitionListener {
         override fun onReadyForSpeech(params: Bundle?) {}
@@ -94,6 +134,8 @@ fun VoiceAssistantApp(speechRecognizer: SpeechRecognizer) {
                 coroutineScope.launch {
                     chatHistory.add("Assistant" to response)
                     isLoading = false
+                    // Speak the response using Text-to-Speech
+                    textToSpeech.speak(response, TextToSpeech.QUEUE_FLUSH, null, null)
                 }
             }
         }
@@ -117,7 +159,9 @@ fun VoiceAssistantApp(speechRecognizer: SpeechRecognizer) {
                 Image(
                     painter = painterResource(id = R.drawable.ic_launcher_foreground), // Replace with your logo resource ID
                     contentDescription = "Pulse Logo",
-                    modifier = Modifier.size(128.dp).padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .size(128.dp)
+                        .padding(bottom = 16.dp)
                 )
 
                 IconButton(
@@ -153,6 +197,7 @@ fun VoiceAssistantApp(speechRecognizer: SpeechRecognizer) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 LazyColumn(
+                    state = listState,
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -238,6 +283,6 @@ fun sendToServerAsync(client: OkHttpClient, userId: String, message: String, cal
 @Composable
 fun VoiceInputAppPreview() {
     PulseTheme {
-        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null))
+        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null), textToSpeech = TextToSpeech(null, null))
     }
 }

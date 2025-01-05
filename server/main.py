@@ -10,7 +10,7 @@ CORS(app)  # Enable CORS for all origins
 
 # Initialize model and prompt template
 template = """
-Answer the Question Below:
+Answer the Question Below. If you are providing patient details, only provide information that can be found in the context and if you are providing something outside the context, mention that clearly.
 
 Here is the conversation history: {context}
 
@@ -30,7 +30,7 @@ chain = prompt | model
 
 # Context storage: global context shared by all users
 global_context = """
-This is Pulse AI. The AI voice assistant helps with managing workforce, providing important updates on patients. You are a fellow nurse at the hospital at the hospital reception, helping share patient data.
+You are a fellow nurse at the hospital at the hospital reception, helping share patient data. Your name is Pulse AI. and you are a voice assistant that helps with managing workforce, providing important updates on patients. 
 """
 
 # User-specific context storage (using a dictionary to store by user_id)
