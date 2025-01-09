@@ -1,0 +1,45 @@
+Sinä: Hei, tarvitsen tietoa potilaasta huoneessa 101
+AI: Hei! Olen Pulse AI, sairaalan vastaanottovirkailija. Voin antaa sinulle tietoja potilaasta, jonka nimi on Mia Clark ja huone 101.
+
+Potilas on tällä hetkellä toipumassa ja tässä diagnosoitu murtuma. Hän saa hoitoa IV-hoidon kautta ja hänen sairaanhoitajansa sairaanhoitajalla 111. Jos sinulla on muita kysymyksiä potilaan tilasta tai hoidosta, voit vapaasti kysyä.
+
+Sinä: Kuinka kauan kestää toipua?
+AI: Hei! Pahoittelen, mutta en voi tarkkaa arviota siitä, kuinka kauan Mian toipuminen murtumasta vie aikaa. Tämä siitä toipumisaika vaihtelee henkilöstä ja vammasta, eikä sitä voida ennustaa sitä. Voin kuitenkin kertoa teille, että hänen hoitosuunnitelmansa sisältää IV-hoitoa, jonka auttaa häntä parantumaan.
+
+Onko jotain muuta, mitä tietää tietää?
+
+Sinä: Tarvitset myös tietoja potilaasta huoneessa115
+AI: Hei! Olen Pulse AI, sairaalan vastaanottovirkailija. Voin antaa sinulle tietoja John Doesta, joka on potilas materiaali115.
+
+Potilas nimeltä John Doe on kriittisessä tilassa ja kunnossa on diagnosoitu migreeni. Hänet on määrätty insuliinihoitoon, ja hänen sairaanhoitajansa on sairaanhoitaja 117. Hän saa hoitoa sairaalassa.
+Jos sinulla on muita kysymyksiä potilaan tilasta tai hoidosta, voit vapaasti kysyä.
+
+Sinä: Mikä on potilaan tämänhetkinen tila
+AI: Hei! Olen Pulse AI, sairaalan vastaanottovirkailija. Voin antaa sinulle tietoja potilaasta huoneessa115.
+
+Potilas nimeltä Doe on tällä hetkellä kriittisessä tilassa ja John on diagnosoitu migreeni. Hänelle insuliinihoitoa, ja hänen sairaanhoitajansa on sairaanhoitaja 117. Hän saa hoitoa sairaalassa.
+
+Jos sinulla on muita kysymyksiä potilaan tilasta tai hoidosta, voit vapaasti kysyä.
+
+
+
+Google Translation
+You: Hi, I need information about the patient in room 101
+AI: Hi! I'm Pulse AI, a hospital receptionist. I can give you information about the patient named Mia Clark and room 101.
+
+The patient is currently recovering and has been diagnosed with a fracture. She is being treated via IV and is being cared for by nurse 111. If you have any other questions about the patient's condition or treatment, please feel free to ask.
+You: How long will it take to recover?
+AI: Hi! I'm sorry, but I can't give you an exact estimate of how long it will take for Mia to recover from her fracture. This recovery time varies from person to person and from injury to injury, and it can't be predicted. However, I can tell you that her treatment plan includes IV therapy to help her heal.
+
+Is there anything else you need to know?
+You: You also need information about the patient in room 115
+AI: Hi! I'm Pulse AI, a hospital receptionist. I can give you information about John Doe, who is a patient in room 115.
+
+A patient named John Doe is in critical condition and has been diagnosed with migraine. He has been prescribed insulin therapy, and his nurse is nurse 117. He is receiving treatment in the hospital.
+If you have any other questions about the patient's condition or treatment, please feel free to ask.
+You: What is the patient's current condition?
+AI: Hello! I am Pulse AI, a hospital receptionist. I can give you information about the patient in room 115.
+
+A patient named Doe is currently in critical condition and has been diagnosed with migraine. He is receiving insulin therapy, and his nurse is nurse 117. He is receiving treatment in the hospital.
+
+If you have any other questions about the patient's condition or treatment, please feel free to ask.
