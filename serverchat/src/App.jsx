@@ -88,6 +88,45 @@ const App = () => {
     }
   };
 
+// Handle record button click to send input and user_id to /record route
+const handleRecord = async () => {
+  if (!message) return;
+
+  try {
+    // Send the POST request to the /record endpoint
+    const response = await axios.post("http://localhost:5000/record", {
+      user_id: userId,
+      note: message,
+    });
+
+    // Extract the response message from the server
+    const aiResponse = response.data.response;
+
+    // Add the recorded note and AI response to the chat history
+    setChatHistory((prevHistory) => ({
+      ...prevHistory,
+      [userId]: [
+        ...(prevHistory[userId] || []),
+        { user: message, ai: aiResponse },
+      ],
+    }));
+
+    setMessage(""); // Clear the input field
+  } catch (error) {
+    console.error("Error recording message:", error);
+
+    // Optionally display an error message in the chat
+    setChatHistory((prevHistory) => ({
+      ...prevHistory,
+      [userId]: [
+        ...(prevHistory[userId] || []),
+        { user: message, ai: "Failed to record message." },
+      ],
+    }));
+  }
+};
+
+
   // Auto-scroll the chat window to the bottom when new messages are added
   useEffect(() => {
     if (chatWindowRef.current) {
@@ -141,6 +180,7 @@ const App = () => {
           />
           <button onClick={handleSendMessage} disabled={isSending}>Send</button>
           <button onClick={handleVoiceInput}>🎤 Voice Input</button>
+          <button onClick={handleRecord}>📚 Record</button>
           {isSending && <div className="sending-animation">Sending...</div>}
         </div>
       </div>

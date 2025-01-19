@@ -1,0 +1,14 @@
+Date,NurseID,PatientID,Note
+2025-01-18 21:19:23, user1, 2, Next IV infusion is due at 0900
+2025-01-19 11:11:19, user1, 10, Recommended Sleep time is 2100
+2025-01-19 21:19:23, user1, 2, Next IV infusion is due at 19002025-01-19 11:21:09,
+2025-01-19 11:40:35, user1, 2, Add a note that she is being moved to room 210 temporarily.
+2025-01-19 11:50:13, user1, 2, There are no immediate alerts or updates regarding Mia Clark's condition. Her next infusion is scheduled for 2359. 
+2025-01-19 11:53:00, user1, 2, There are no urgent alerts or updates regarding Mia Clark's condition at this time.  Her next infusion is scheduled for 2359. 2025-01-19 12:06:45
+2025-01-19 12:08:22, user1, 2, She is feeling better now.
+2025-01-19 12:19:24, user1, 2, Patient in room 101 is in critical condition
+2025-01-19 12:20:03, user1, 10, Patient in room 124 is in critical condition
+2025-01-19 12:21:10, user1, 5, Patient in room 102 is in critical condition
+2025-01-19 12:22:22, user1, 5, Patient in room 102 is in critical condition
+2025-01-19 12:23:45, user1, 5, Patient in 124 is stable
+2025-01-19 12:25:17, user1, 5, Patient in room 102 is stable
