@@ -49,6 +49,8 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
     private lateinit var speechRecognizer: SpeechRecognizer
     private lateinit var textToSpeech: TextToSpeech
+    private val sessionID: String = UUID.randomUUID().toString()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +75,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
         setContent {
             PulseTheme {
-                VoiceAssistantApp(speechRecognizer = speechRecognizer, textToSpeech = textToSpeech)
+                VoiceAssistantApp(speechRecognizer = speechRecognizer, textToSpeech = textToSpeech, sessionID=sessionID)
             }
         }
     }
@@ -101,11 +103,13 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 @Composable
 fun VoiceAssistantApp(
     speechRecognizer: SpeechRecognizer,
-    textToSpeech: TextToSpeech
+    textToSpeech: TextToSpeech,
+    sessionID: String
 ) {
     val client = remember { OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS).build() }
+
 
     var isListening by remember { mutableStateOf(false) }
     var selectedLocale by remember { mutableStateOf(Locale("en", "FI")) }
@@ -126,6 +130,8 @@ fun VoiceAssistantApp(
 
     // Text input state for custom messages
     var customMessage by remember { mutableStateOf("") }
+
+
 
     fun startListening(route: String) {
         val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
@@ -149,11 +155,11 @@ fun VoiceAssistantApp(
 
                     coroutineScope.launch {
                         if (route == "/chat") {
-                            sendToChatAsync(client, UUID.randomUUID().toString(), recognizedText, selectedLocale) { serverResponse ->
+                            sendToChatAsync(client, sessionID, recognizedText, selectedLocale) { serverResponse ->
                                 chatHistory.add(serverResponse to MessageType.Server)
                             }
                         } else if (route == "/record") {
-                            sendToRecordAsync(client, UUID.randomUUID().toString(), recognizedText, selectedLocale) { serverResponse ->
+                            sendToRecordAsync(client, sessionID, recognizedText, selectedLocale) { serverResponse ->
                                 chatHistory.add(serverResponse to MessageType.Server)
                             }
                         }
@@ -380,11 +386,11 @@ fun VoiceAssistantApp(
 
                                     coroutineScope.launch {
                                         if (route === "/chat") {
-                                            sendToChatAsync(client, UUID.randomUUID().toString(), messageToServer, selectedLocale) { serverResponse ->
+                                            sendToChatAsync(client, sessionID, messageToServer, selectedLocale) { serverResponse ->
                                                 chatHistory.add(serverResponse to MessageType.Server)
                                             }
                                         } else if (route === "/record") {
-                                            sendToRecordAsync(client, UUID.randomUUID().toString(), messageToServer, selectedLocale) { serverResponse ->
+                                            sendToRecordAsync(client, sessionID, messageToServer, selectedLocale) { serverResponse ->
                                                 chatHistory.add(serverResponse to MessageType.Server)
                                             }
                                         }
@@ -519,6 +525,6 @@ fun sendToServerAsync(client: OkHttpClient, userId: String, message: String, loc
 @Composable
 fun VoiceInputAppPreview() {
     PulseTheme {
-        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null), textToSpeech = TextToSpeech(null, null))
+        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null), textToSpeech = TextToSpeech(null, null), sessionID="user" )
     }
 }

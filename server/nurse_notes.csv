@@ -1,4 +1,6 @@
 Date,NurseID,PatientID,Note
 2025-01-18 21:19:23, user1, 2, Next IV infusion is due at 0900
+2025-01-23 15:06:17, user1, 10, Patient in room 124 is stable now.
 2025-01-25 12:52:07, user1, 3, Oxygen support removed for Ella Baker
-2025-01-25 14:50:46, fb649481-8b34-4354-8086-289d6ddb1d96, 10, Patient in room 124 is stable
+2025-01-25 15:06:17, user1, 10, Patient in room 124 is recovering now.
+2025-01-25 21:19:23, user1, 2, Next IV infusion is due at 2000

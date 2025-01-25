@@ -96,7 +96,7 @@ const handleRecord = async () => {
     // Send the POST request to the /record endpoint
     const response = await axios.post("http://localhost:5000/record", {
       user_id: userId,
-      note: message,
+      message: message,
     });
 
     // Extract the response message from the server

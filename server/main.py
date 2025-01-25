@@ -19,13 +19,13 @@ Here is the conversation history: {context}
 
 Don't repeat the information that is already provided in the conversation history, unless asked to.
 
-Here are the patient details: {patient_details}
+Here are the patient details with a timestamp of their last update: {patient_details}
 
-Here are the nurse notes: {nurse_notes_result}
+Here are the nurse notes with timestamps of when they were updated: {nurse_notes_result}
 
 Question: {question}
 
-Prioritize information that is relevant to the question and start with mentioning any important alerts and updates and provide a clear and concise answer in a human-like manner.
+Prioritize information that is relevant to the question and start with mentioning any important alerts and updates based on timestamps and provide a clear and concise answer in a human-like manner.
 
 Answer: 
 
@@ -51,13 +51,7 @@ Answer the Question Below. If you are providing patient details, only provide in
 Here are the nurse notes: 
 {nurse_notes}
 
-Summarize and Filter relevant and improtant information in bullet points, prioritizing it. Process the nurse notes by performing the following steps:
-
-1. Identify all scheduled events (e.g., IV infusions, medication doses) and patient condition updates in the nurse notes.
-2. Discard any outdated reminders or scheduled events that have passed (e.g., Medical procedures for dates that have already passed).
-3. For each patient, ensure only the latest relevant note is retained. If patient condition has been updated, use recent and time-valid updates. If a future event (e.g., IV infusion, Xray, etc.) is scheduled, retain the most recent one.
-4. Prioritize the latest and most relevant notes that have not yet occurred (or are still relevant based on the patient's current condition).
-
+Given the list of these notes, group the notes by a common theme, and based on the date, provide the latest update for a particular theme. Don't provide any reasoning.
 Response:
 """
 
@@ -106,6 +100,7 @@ def get_patient_notes(patient_id):
         nurse_start_time = time.time()
         nurse_notes_result = nurseNotesChain.invoke({"nurse_notes": notes_list})
         print(f"Nurse notes processed for Patient ID: {patient_id}")
+        print(nurse_notes_result)
         nurse_end_time = time.time()
         print(f"Nurse Notes AI Procssing time: {nurse_end_time - nurse_start_time} seconds")
         return nurse_notes_result
@@ -121,7 +116,7 @@ def get_patient_details_by_room(room_number):
         return (
             f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
-            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, "
+            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID'],}, Last Update: {patient['Last Update']}, "
         ), patient_id
     return None, None
 
@@ -134,7 +129,7 @@ def get_patient_details_by_name(patient_name):
         return (
             f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
-            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, "
+            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, Last Update: {patient['Last Update']}, "
         ), patient_id
     return None, None
 
