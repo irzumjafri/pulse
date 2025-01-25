@@ -4,7 +4,7 @@ Patient ID,Patient Name,Room Number,Condition,Diagnosis,Undergoing Treatments,As
 3,Ella Baker,121,Critical,Hypertension,Oxygen Support,114
 4,Emma Wilson,118,Critical,COVID-19,Physiotherapy,102
 5,Charlie Davis,102,Critical,Diabetes,Physiotherapy,108
-6,Michael Wright,138,Critical,Hypertension,Physiotherapy,106
+6,Michael Wright,137,Critical,Hypertension,Physiotherapy,106
 7,Jane Smith,123,Under Observation,Hypertension,Surgery,104
 8,Ava Scott,138,Recovering,COVID-19,Physiotherapy,129
 9,Chloe Mitchell,127,Recovering,Pneumonia,Physiotherapy,102

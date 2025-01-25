@@ -61,4 +61,9 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation(libs.androidx.material.icons.extended)
+    implementation (libs.androidx.ui.v160)
+    implementation (libs.androidx.material3.v120)
+    implementation (libs.androidx.foundation)
+    implementation (libs.androidx.activity.compose.v172)
+    implementation (libs.ui.tooling)
 }
