@@ -40,6 +40,8 @@ import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.TimeUnit
 
+private val serverIP = "84.249.51.158"
+
 enum class MessageType {
     Chat, Record, Server
 }
@@ -218,6 +220,8 @@ fun VoiceAssistantApp(
         })
 
         speechRecognizer.startListening(intent)
+        Log.d("SpeechRecognition", "Selected Locale: ${selectedLocale.language}-${selectedLocale.country}")
+
     }
 
     LaunchedEffect(chatHistory.size) {
@@ -308,12 +312,15 @@ fun VoiceAssistantApp(
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Say \"Hey Pulse\" or \"Record Pulse\" or press a button to get started.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onBackground,
-                        textAlign = TextAlign.Center
-                    )
+                    if (!isSecurityModeActive) {
+                        Text(
+                            text = "Say \"Hey Pulse\" or \"Record Pulse\" or press a button to get started.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onBackground,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+
                 }
             } else {
                 LazyColumn(
@@ -481,12 +488,12 @@ fun ChatBubble(message: String, messageType: MessageType) {
 
 
 fun sendToChatAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
-    val url = "http://10.0.2.2:5000/chat"
+    val url = "http://" + serverIP + ":5000/chat"
     sendToServerAsync(client, userId, message, locale, url, callback)
 }
 
 fun sendToRecordAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
-    val url = "http://10.0.2.2:5000/record"
+    val url = "http://" + serverIP + ":5000/record"
     sendToServerAsync(client, userId, message, locale, url, callback)
 }
 
