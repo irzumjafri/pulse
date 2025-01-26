@@ -40,7 +40,7 @@ import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-private val serverIP = "84.249.51.158"
+private const val serverIP = "153.1.146.170"
 
 enum class MessageType {
     Chat, Record, Server
@@ -488,12 +488,12 @@ fun ChatBubble(message: String, messageType: MessageType) {
 
 
 fun sendToChatAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
-    val url = "http://" + serverIP + ":5000/chat"
+    val url = "http://$serverIP:5000/chat"
     sendToServerAsync(client, userId, message, locale, url, callback)
 }
 
 fun sendToRecordAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
-    val url = "http://" + serverIP + ":5000/record"
+    val url = "http://$serverIP:5000/record"
     sendToServerAsync(client, userId, message, locale, url, callback)
 }
 

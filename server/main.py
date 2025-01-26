@@ -55,7 +55,7 @@ Given the list of these notes, group the notes by a common theme, and based on t
 Response:
 """
 
-model = OllamaLLM(model="pulseAITiny")
+model = OllamaLLM(model="irzumbm/pulseAITiny")
 chatPrompt = ChatPromptTemplate.from_template(chatTemplate)
 recordPrompt = ChatPromptTemplate.from_template(recordingTemplate)
 nurseNotesPrompt = ChatPromptTemplate.from_template(nurseNotesTemplate)
@@ -64,7 +64,7 @@ nurseNotesChain = nurseNotesPrompt | model
 recordChain = recordPrompt | model
 
 # Context storage: global and user-specific
-global_context = """You are a fellow digital nurse at the hospital reception, helping share patient data. Your name is Pulse AI. You are a voice assistant that helps with managing workforce and providing important updates on patients."""
+global_context = ""
 user_contexts = {}
 
 # Load patient data
@@ -213,33 +213,14 @@ def record():
     patient_note = data.get("message")
     current_date = pd.to_datetime("now").strftime("%Y-%m-%d %H:%M:%S")
 
-
-    print("Request recieved from user:", user_id)
+    print("Request received from user:", user_id)
     print("Message:", patient_note)
     print("Language:", data.get("language"))
 
     if not patient_note:
         return jsonify({"error": "Patient data couldn't be saved due to missing note content."}), 400
 
-    # Step 1: Extract potential patient information from the note
-    potential_patient_details, potential_patient_id = None, None
-    for room_number in patient_data["Room Number"].unique():
-        if str(room_number) in patient_note:
-            potential_patient_details, potential_patient_id = get_patient_details_by_room(room_number)
-            if potential_patient_details:
-                break
-
-    if not potential_patient_details:
-        for name in patient_data["Patient Name"]:
-            if name.lower() in patient_note.lower():
-                potential_patient_details, potential_patient_id = get_patient_details_by_name(name)
-                if potential_patient_details:
-                    break
-
-    if not potential_patient_details:
-        return jsonify({"error": "Patient room number or name required to save note."}), 400
-
-    # Step 2: Check if patient is already in user context
+    # Ensure user context exists
     if user_id not in user_contexts:
         user_contexts[user_id] = {
             "patient_id": None,
@@ -248,21 +229,37 @@ def record():
             "chat_history": []
         }
 
-    if (
-        user_contexts[user_id]["patient_id"] == potential_patient_id and
-        user_contexts[user_id]["patient_details"] == potential_patient_details
-    ):
-        # Patient details are already in context
+    # Check if a patient is already in the user's context
+    if user_contexts[user_id]["patient_id"]:
         patient_id = user_contexts[user_id]["patient_id"]
         patient_details = user_contexts[user_id]["patient_details"]
+        print(f"Patient already in context: {patient_details}")
     else:
-        # Update user context with new patient details
+        # Step 1: Extract potential patient information from the note
+        potential_patient_details, potential_patient_id = None, None
+        for room_number in patient_data["Room Number"].unique():
+            if str(room_number) in patient_note:
+                potential_patient_details, potential_patient_id = get_patient_details_by_room(room_number)
+                if potential_patient_details:
+                    break
+
+        if not potential_patient_details:
+            for name in patient_data["Patient Name"]:
+                if name.lower() in patient_note.lower():
+                    potential_patient_details, potential_patient_id = get_patient_details_by_name(name)
+                    if potential_patient_details:
+                        break
+
+        if not potential_patient_details:
+            return jsonify({"error": "Patient room number or name required to save note."}), 400
+
+        # Update user context with the newly identified patient
         patient_id = potential_patient_id
         patient_details = potential_patient_details
         user_contexts[user_id]["patient_id"] = patient_id
         user_contexts[user_id]["patient_details"] = patient_details
 
-    # Step 3: Update nurse notes in user context
+    # Step 2: Update nurse notes in user context
     user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
 
     # Add the new note to nurse notes
@@ -282,7 +279,7 @@ def record():
             file.write("Date, NurseID, PatientID, Note\n")
             file.write(new_note_csv)
 
-    # Step 4: Update context for record chain
+    # Step 3: Update context for record chain
     context = global_context
     context += "\nChat History:\n" + "\n".join(
         [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
@@ -300,7 +297,6 @@ def record():
     user_contexts[user_id]["chat_history"].append({"user": patient_note, "ai": result})
 
     return jsonify({"response": result}), 200
-
 
 
 @app.route('/set_global_context', methods=['POST'])
