@@ -1,12 +1,7 @@
 package com.solita.pulse.ui
 
-import android.content.Intent
-import android.os.Bundle
-import android.speech.RecognitionListener
-import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,10 +45,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.solita.pulse.models.MessageType
 import com.solita.pulse.network.NetworkUtils
+import com.solita.pulse.speech.SpeechManager
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
 import java.util.Locale
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun VoiceAssistantApp(
@@ -62,191 +56,22 @@ fun VoiceAssistantApp(
     sessionID: String
 ) {
 
-
-    val client = remember { OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
-        .readTimeout(60, TimeUnit.SECONDS)
-        .writeTimeout(60, TimeUnit.SECONDS).build() }
-
-
-    var isListening by remember { mutableStateOf(false) }
     var selectedLocale by remember { mutableStateOf(Locale("en", "FI")) }
     val chatHistory = remember { mutableStateListOf<Pair<String, MessageType>>() }
     var currentUserMessage by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
-
     val listState = rememberLazyListState()
-
     var isChatActive by remember { mutableStateOf(true) } // Default to chat mode
     var isRecordActive by remember { mutableStateOf(false) }
-
-    // New state for security toggle
     var isSecurityModeActive by remember { mutableStateOf(false) }
-
-    // State to manage the visibility of the language dropdown menu
     var isLanguageMenuExpanded by remember { mutableStateOf(false) }
-
-    // Text input state for custom messages
     var customMessage by remember { mutableStateOf("") }
 
-    fun startListening(route: String) {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, selectedLocale.toString())
-        }
-
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                isListening = true
-                currentUserMessage = "Listening..."
-            }
-
-            override fun onResults(results: Bundle?) {
-                isListening = false
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                val recognizedText = matches?.firstOrNull().orEmpty()
-                if (recognizedText.isNotEmpty()) {
-                    currentUserMessage = ""
-                    chatHistory.add(recognizedText to (if (isChatActive) MessageType.Chat else MessageType.Record))
-
-                    coroutineScope.launch {
-                        if (route == "/chat") {
-                            NetworkUtils.sendToChatAsync(
-                                client,
-                                sessionID,
-                                recognizedText,
-                                selectedLocale
-                            ) { serverResponse ->
-                                chatHistory.add(serverResponse to MessageType.Server)
-                            }
-                        } else if (route == "/record") {
-                            NetworkUtils.sendToRecordAsync(
-                                client,
-                                sessionID,
-                                recognizedText,
-                                selectedLocale
-                            ) { serverResponse ->
-                                chatHistory.add(serverResponse to MessageType.Server)
-                            }
-                        }
-                    }
-                }
-
-            }
-
-            override fun onError(error: Int) {
-                isListening = false
-                currentUserMessage = ""
-
-                val errorMessage = when (error) {
-                    SpeechRecognizer.ERROR_NO_MATCH -> {
-                        if (selectedLocale.language == "fi") {
-                            "Anteeksi, en ymmärtänyt. Voisitko toistaa pyyntösi?"
-                        } else {
-                            "Sorry, I couldn't understand that. Could you please repeat the request?"
-                        }
-                    }
-                    SpeechRecognizer.ERROR_NETWORK -> {
-                        if (selectedLocale.language == "fi") {
-                            "Verkkovirhe. Tarkista internetyhteytesi."
-                        } else {
-                            "Network error. Please check your internet connection."
-                        }
-                    }
-                    SpeechRecognizer.ERROR_AUDIO -> {
-                        if (selectedLocale.language == "fi") {
-                            "Ääniongelma havaittu. Yritä uudelleen."
-                        } else {
-                            "Audio error detected. Please try again."
-                        }
-                    }
-                    else -> {
-                        if (selectedLocale.language == "fi") {
-                            "Tapahtui virhe. Yritä uudelleen."
-                        } else {
-                            "An error occurred. Please try again."
-                        }
-                    }
-                }
-
-                chatHistory.add(errorMessage to MessageType.Server)
-
-            }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                val partialText = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                currentUserMessage = partialText.orEmpty()
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-            override fun onEndOfSpeech() {}
-            override fun onBeginningOfSpeech() {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onRmsChanged(rmsdB: Float) {}
-        })
-
-
-        speechRecognizer.startListening(intent)
-        Log.d("SpeechRecognition", "Selected Locale: ${selectedLocale.language}-${selectedLocale.country}")
-
-    }
-
-
-    // Hotword Detection Function
-    fun startHotwordDetection(speechRecognizer: SpeechRecognizer) {
-        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-            putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale("fi", "FI").toString()) // You can dynamically switch locale if needed
-        }
-
-        speechRecognizer.setRecognitionListener(object : RecognitionListener {
-            override fun onReadyForSpeech(params: Bundle?) {
-                Log.d("HotWord", "Listening for Hotword")
-            }
-
-            override fun onResults(results: Bundle?) {
-                val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
-                matches?.forEach { recognizedText ->
-                    Log.d("HotWord", "Recognized: $recognizedText")
-                    if (recognizedText.contains("Hey Pulse", ignoreCase = true)) {
-                        startListening("/chat")
-                    } else if (recognizedText.contains("Record Pulse", ignoreCase = true)) {
-                        startListening("/record")
-                    }
-                    else{
-                        speechRecognizer.startListening(intent)
-                    }
-                }
-            }
-
-            override fun onError(error: Int) {
-                // Handle errors (as in your existing code)
-                Log.d("HotWord", "Error: $error")
-                speechRecognizer.startListening(intent)
-
-            }
-
-            override fun onPartialResults(partialResults: Bundle?) {
-                // Handle partial results (as in your existing code)
-            }
-
-            override fun onEvent(eventType: Int, params: Bundle?) {}
-            override fun onEndOfSpeech() {
-                speechRecognizer.startListening(intent)
-            }
-            override fun onBeginningOfSpeech() {}
-            override fun onBufferReceived(buffer: ByteArray?) {}
-            override fun onRmsChanged(rmsdB: Float) {}
-        })
-
-        // Start listening immediately for hotwords
-        speechRecognizer.startListening(intent)
-    }
 
     // Start listening for hotwords as soon as the composable is loaded
-    LaunchedEffect(Unit) {
-        startHotwordDetection(speechRecognizer)
-    }
-
+//    LaunchedEffect(Unit) {
+//        SpeechManager.startHotwordDetection(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope)
+//    }
 
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) {
@@ -418,7 +243,6 @@ fun VoiceAssistantApp(
                                     coroutineScope.launch {
                                         if (route === "/chat") {
                                             NetworkUtils.sendToChatAsync(
-                                                client,
                                                 sessionID,
                                                 messageToServer,
                                                 selectedLocale
@@ -441,7 +265,6 @@ fun VoiceAssistantApp(
                                             }
                                         } else if (route === "/record") {
                                             NetworkUtils.sendToRecordAsync(
-                                                client,
                                                 sessionID,
                                                 messageToServer,
                                                 selectedLocale
@@ -477,7 +300,7 @@ fun VoiceAssistantApp(
                         onClick = {
                             isChatActive = true
                             isRecordActive = false
-                            startListening("/chat")
+                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/chat")
                         },
                         modifier = Modifier.size(64.dp)
                     ) {
@@ -491,7 +314,8 @@ fun VoiceAssistantApp(
                         onClick = {
                             isRecordActive = true
                             isChatActive = false
-                            startListening("/record")
+                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/record")
+
                         },
                         modifier = Modifier.size(64.dp)
                     ) {

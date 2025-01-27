@@ -6,22 +6,27 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.Locale
+import java.util.concurrent.TimeUnit
 
 object NetworkUtils {
     //private const val SERVER_ADDRESS = "http://10.0.2.2:5000"
     private const val SERVER_ADDRESS = "https://fluent-macaw-suitably.ngrok-free.app"
 
-    fun sendToChatAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
+    val client =  OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS).build()
+
+    fun sendToChatAsync(userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
         val url = "$SERVER_ADDRESS/chat"
-        sendToServerAsync(client, userId, message, locale, url, callback)
+        sendToServerAsync(userId, message, locale, url, callback)
     }
 
-    fun sendToRecordAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
+    fun sendToRecordAsync(userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
         val url = "$SERVER_ADDRESS/record"
-        sendToServerAsync(client, userId, message, locale, url, callback)
+        sendToServerAsync(userId, message, locale, url, callback)
     }
 
-    private fun sendToServerAsync(client: OkHttpClient, userId: String, message: String, locale: Locale, url: String, callback: (String) -> Unit) {
+    private fun sendToServerAsync(userId: String, message: String, locale: Locale, url: String, callback: (String) -> Unit) {
         val json = JSONObject().apply {
             put("user_id", userId)
             put("message", message)
