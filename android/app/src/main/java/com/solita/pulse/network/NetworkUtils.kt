@@ -9,8 +9,8 @@ import java.util.Locale
 import java.util.concurrent.TimeUnit
 
 object NetworkUtils {
-    //private const val SERVER_ADDRESS = "http://10.0.2.2:5000"
-    private const val SERVER_ADDRESS = "https://fluent-macaw-suitably.ngrok-free.app"
+    private const val SERVER_ADDRESS = "http://10.0.2.2:5000"
+    //private const val SERVER_ADDRESS = "https://fluent-macaw-suitably.ngrok-free.app"
 
     val client =  OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
