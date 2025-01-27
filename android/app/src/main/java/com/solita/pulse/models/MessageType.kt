@@ -1,4 +1,4 @@
-package com.solita.pulse
+package com.solita.pulse.models
 
 enum class MessageType {
     Chat, Record, Server

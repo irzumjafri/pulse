@@ -1,4 +1,4 @@
-package com.solita.pulse
+package com.solita.pulse.network
 
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
