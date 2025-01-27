@@ -2,6 +2,7 @@ package com.solita.pulse.ui
 
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,7 +57,7 @@ fun VoiceAssistantApp(
     sessionID: String
 ) {
 
-    var selectedLocale by remember { mutableStateOf(Locale("en", "FI")) }
+    var selectedLocale by remember { mutableStateOf(Locale("en", "US")) }
     val chatHistory = remember { mutableStateListOf<Pair<String, MessageType>>() }
     var currentUserMessage by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
@@ -67,11 +68,6 @@ fun VoiceAssistantApp(
     var isLanguageMenuExpanded by remember { mutableStateOf(false) }
     var customMessage by remember { mutableStateOf("") }
 
-
-    // Start listening for hotwords as soon as the composable is loaded
-//    LaunchedEffect(Unit) {
-//        SpeechManager.startHotwordDetection(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope)
-//    }
 
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) {
@@ -109,6 +105,7 @@ fun VoiceAssistantApp(
                             modifier = Modifier.clickable {
                                 // Toggle security mode
                                 isSecurityModeActive = !isSecurityModeActive
+                                Log.d("VoiceAssistantApp", "Security mode toggled: $isSecurityModeActive")
                             }
                         )
                     }
@@ -241,7 +238,7 @@ fun VoiceAssistantApp(
 
 
                                     coroutineScope.launch {
-                                        if (route === "/chat") {
+                                        if (route == "/chat") {
                                             NetworkUtils.sendToChatAsync(
                                                 sessionID,
                                                 messageToServer,
