@@ -297,7 +297,7 @@ fun VoiceAssistantApp(
                         onClick = {
                             isChatActive = true
                             isRecordActive = false
-                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/chat")
+                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/chat", textToSpeech)
                         },
                         modifier = Modifier.size(64.dp)
                     ) {
@@ -311,7 +311,7 @@ fun VoiceAssistantApp(
                         onClick = {
                             isRecordActive = true
                             isChatActive = false
-                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/record")
+                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/record", textToSpeech)
 
                         },
                         modifier = Modifier.size(64.dp)

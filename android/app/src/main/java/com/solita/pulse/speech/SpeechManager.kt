@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.util.Log
 import com.solita.pulse.models.MessageType
 import com.solita.pulse.network.NetworkUtils
@@ -20,12 +21,12 @@ object SpeechManager {
         sessionID: String,
         chatHistory: MutableList<Pair<String, MessageType>>,
         coroutineScope: CoroutineScope,
-        route: String
+        route: String,
+        textToSpeech: TextToSpeech
     ) {
         Log.d("Recognizing Speech :", "$selectedLocale")
-        var speechLanguage = ""
-        speechLanguage = if (selectedLocale.toString() == "en_US"){
-            "en-US"
+        val speechLanguage: String = if (selectedLocale.toString() == "en_US"){
+            "en-UK"
         } else{
             "fi-FI"
         }
@@ -50,11 +51,41 @@ object SpeechManager {
                         if (route == "/chat") {
                             NetworkUtils.sendToChatAsync(sessionID, recognizedText, selectedLocale) { serverResponse ->
                                 chatHistory[chatHistory.size - 1] = (serverResponse.trim() to MessageType.Server)
+                                if (textToSpeech.isSpeaking) {
+                                    textToSpeech.stop()
+                                }
+                                if (selectedLocale.language == "fi") {
+                                    textToSpeech.setLanguage(Locale("fi", "FI"))
+                                } else {
+                                    textToSpeech.setLanguage(Locale("en", "US"))
+                                }
+                                textToSpeech.speak(
+                                    serverResponse,
+                                    TextToSpeech.QUEUE_FLUSH,
+                                    null,
+                                    null
+                                )
                             }
+
                         } else if (route == "/record") {
                             NetworkUtils.sendToRecordAsync(sessionID, recognizedText, selectedLocale) { serverResponse ->
                                 chatHistory[chatHistory.size - 1] = (serverResponse.trim() to MessageType.Server)
+                                if (textToSpeech.isSpeaking) {
+                                    textToSpeech.stop()
+                                }
+                                if (selectedLocale.language == "fi") {
+                                    textToSpeech.setLanguage(Locale("fi", "FI"))
+                                } else {
+                                    textToSpeech.setLanguage(Locale("en", "US"))
+                                }
+                                textToSpeech.speak(
+                                    serverResponse,
+                                    TextToSpeech.QUEUE_FLUSH,
+                                    null,
+                                    null
+                                )
                             }
+
                         }
                     }
                 }

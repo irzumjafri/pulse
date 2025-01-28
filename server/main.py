@@ -25,7 +25,7 @@ Here are the nurse notes with timestamps of when they were updated: {nurse_notes
 
 Question: {question}
 
-Prioritize information that is relevant to the question and start with mentioning any important alerts and updates based on timestamps and provide a clear and concise answer in a human-like manner.
+Prioritize information that is relevant to the question and start with mentioning any important alerts and updates based on timestamps and provide a clear and concise answer in a human-like manner. No need to provide any dates or timestamps in the response unless it is important.
 
 Answer: 
 
