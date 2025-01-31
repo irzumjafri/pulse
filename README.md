@@ -34,6 +34,8 @@ Release File
 You can download the latest release of the app from the following link:
 
 [Download APK](https://drive.google.com/file/d/1Ogh9e82ngbFfANM6Yo7i6BwTOHrINR9g/view?usp=sharing)
+
+
 Contributing
 
 If you'd like to contribute to the project or report any issues, please feel free to open an issue or submit a pull request on the GitHub repository.
