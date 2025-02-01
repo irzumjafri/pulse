@@ -295,6 +295,7 @@ fun VoiceAssistantApp(
                     // Default Bottom Section with Chat and Record Icons
                     IconButton(
                         onClick = {
+                            textToSpeech.stop()
                             isChatActive = true
                             isRecordActive = false
                             SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/chat", textToSpeech)
@@ -309,6 +310,7 @@ fun VoiceAssistantApp(
                     }
                     IconButton(
                         onClick = {
+                            textToSpeech.stop()
                             isRecordActive = true
                             isChatActive = false
                             SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/record", textToSpeech)
