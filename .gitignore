@@ -1,1 +1,3 @@
 servervenv/
+server/Dockerfile
+server/start.sh

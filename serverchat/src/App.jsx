@@ -20,7 +20,7 @@ const App = () => {
     setIsSending(true); // Show sending animation
 
     try {
-      const res = await axios.post("http://localhost:5000/chat", {
+      const res = await axios.post("https://fluent-macaw-suitably.ngrok-free.app/chat", {
         user_id: userId,
         message,
       });
@@ -80,7 +80,7 @@ const App = () => {
   // Reset user-specific context
   const handleResetContext = async () => {
     try {
-      await axios.post("http://localhost:5000/reset_user_context", { user_id: userId });
+      await axios.post("https://fluent-macaw-suitably.ngrok-free.app/reset_user_context", { user_id: userId });
       setChatHistory((prevHistory) => ({ ...prevHistory, [userId]: [] })); // Clear chat history
       alert(`Context for ${userId} has been reset.`);
     } catch (error) {
@@ -94,7 +94,7 @@ const handleRecord = async () => {
 
   try {
     // Send the POST request to the /record endpoint
-    const response = await axios.post("http://localhost:5000/record", {
+    const response = await axios.post("https://fluent-macaw-suitably.ngrok-free.app/record", {
       user_id: userId,
       message: message,
     });

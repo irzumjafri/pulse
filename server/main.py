@@ -1,5 +1,6 @@
 # Required imports
-from langdetect import detect
+# from langdetect import detect
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from langchain_ollama import OllamaLLM
@@ -311,5 +312,7 @@ def set_global_context():
 def test():
     return jsonify({"message": "Server is running!"}), 200
 
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Start the Flask app
+    app.run(debug=True, host="0.0.0.0", port=5000)  
