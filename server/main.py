@@ -14,22 +14,28 @@ CORS(app)  # Enable CORS for all origins
 
 # Initialize model and prompt template
 chatTemplate = """
-Answer the Question Below. If you are providing patient details, only provide information that can be found in the context, and if you are providing something outside the context, mention that clearly.
+Answer the question below, prioritizing information from the provided context.  If you must provide information outside the context, explicitly state that it is not from the provided data.  Do not fabricate information.
+Current Time: {current_time}
 
-Here is the conversation history: {context}
+Context: {context}
 
-Don't repeat the information that is already provided in the conversation history, unless asked to.
+Patient Details: {patient_details}
 
-Here are the patient details with a timestamp of their last update: {patient_details}
-
-Here are the nurse notes with timestamps of when they were updated: {nurse_notes_result}
+Nurse Notes: {nurse_notes_result}
 
 Question: {question}
 
-Prioritize information that is relevant to the question and start with mentioning any important alerts and updates based on timestamps and provide a clear and concise answer in a human-like manner. No need to provide any dates or timestamps in the response unless it is important.
+Instructions:
 
-Answer: 
+*   Be concise and clear in your answer.  Avoid unnecessary details.
+*   Start by addressing any urgent alerts or recent updates (based on the provided timestamps).
+*   Do not repeat information already present in the context unless specifically asked to.
+*   Answer in a natural, human-like conversational style.
+*   Do not include dates or timestamps in your response, unless specifically requested.
+*   Do not use emojis.
+*   Focus on the most relevant information for the question.
 
+Answer:
 """
 
 recordingTemplate = """
@@ -56,7 +62,7 @@ Given the list of these notes, group the notes by a common theme, and based on t
 Response:
 """
 
-model = OllamaLLM(model="irzumbm/pulseAITiny")
+model = OllamaLLM(model="pulseAITiny", max_tokens=30)
 chatPrompt = ChatPromptTemplate.from_template(chatTemplate)
 recordPrompt = ChatPromptTemplate.from_template(recordingTemplate)
 nurseNotesPrompt = ChatPromptTemplate.from_template(nurseNotesTemplate)
@@ -190,7 +196,9 @@ def chat():
 
     print("Calling chat chain...")
     ai_start_time = time.time()
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
     chat_result = chatChain.invoke({
+        "current_time": current_time,
         "context": context,
         "question": user_input,
         "patient_details": user_contexts[user_id]["patient_details"],
