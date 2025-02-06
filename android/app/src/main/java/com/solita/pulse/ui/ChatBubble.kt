@@ -1,5 +1,6 @@
 package com.solita.pulse.ui
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,16 +13,30 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.solita.pulse.models.MessageType
 
 @Composable
 fun ChatBubble(message: String, messageType: MessageType) {
-    // Determine the bubble color based on the message type
-    val bubbleColor = when (messageType) {
-        MessageType.Chat -> MaterialTheme.colorScheme.primary // Blue for Chat
-        MessageType.Record -> MaterialTheme.colorScheme.error // Red for Record
-        MessageType.Server -> MaterialTheme.colorScheme.surfaceVariant // Grey for Server
+    // Define light and dark mode colors for each message type
+    val (lightBubbleColor, darkBubbleColor) = when (messageType) {
+        MessageType.Chat -> Pair(
+            Color(0xFFAEE6FF), Color(0xFF1E3A5A)
+        ) // Light: #AEE6FF, Dark: #1E3A5A
+        MessageType.Record -> Pair(
+            Color(0xFFFF7A90), Color(0xFF5A202F)
+        ) // Light: #FF7A90, Dark: #5A202F
+        MessageType.Server -> Pair(
+            Color(0xFFE0E0E0), Color(0xFF333333)
+        ) // Light: #E0E0E0, Dark: #333333
+    }
+
+    // Determine the bubble color based on the message type and dark mode
+    val bubbleColor: Color = if (isSystemInDarkTheme()) {
+        darkBubbleColor
+    } else {
+        lightBubbleColor
     }
 
     // Determine alignment based on message type
@@ -37,20 +52,17 @@ fun ChatBubble(message: String, messageType: MessageType) {
             .wrapContentSize(alignment)
     ) {
         Surface(
-            modifier = Modifier
-                .widthIn(max = 280.dp)
-                .padding(8.dp),
+            modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(12.dp),
             color = bubbleColor
         ) {
+
             Text(
                 text = message,
                 modifier = Modifier.padding(12.dp),
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (messageType == MessageType.Chat || messageType == MessageType.Record)
-                    MaterialTheme.colorScheme.onPrimary
-                else
-                    MaterialTheme.colorScheme.onSurface
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (messageType == MessageType.Chat || messageType == MessageType.Record) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurface
             )
         }
     }

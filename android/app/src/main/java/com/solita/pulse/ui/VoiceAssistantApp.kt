@@ -13,25 +13,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChatBubble
-import androidx.compose.material.icons.filled.NoteAlt
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,9 +45,7 @@ import java.util.Locale
 
 @Composable
 fun VoiceAssistantApp(
-    speechRecognizer: SpeechRecognizer,
-    textToSpeech: TextToSpeech,
-    sessionID: String
+    speechRecognizer: SpeechRecognizer, textToSpeech: TextToSpeech, sessionID: String
 ) {
 
     var selectedLocale by remember { mutableStateOf(Locale("en", "US")) }
@@ -92,51 +83,47 @@ fun VoiceAssistantApp(
             ) {
                 Text(
                     text = "Pulse",
-                    style = MaterialTheme.typography.headlineLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     // Security Icon wrapped in a Box for consistency
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(
-                            imageVector = Icons.Default.Security,
+                        Icon(imageVector = Icons.Default.Security,
                             contentDescription = "Private Mode",
                             tint = MaterialTheme.colorScheme.onBackground,
                             modifier = Modifier.clickable {
                                 // Toggle security mode
                                 isSecurityModeActive = !isSecurityModeActive
-                                Log.d("VoiceAssistantApp", "Security mode toggled: $isSecurityModeActive")
-                            }
-                        )
+                                Log.d(
+                                    "VoiceAssistantApp",
+                                    "Security mode toggled: $isSecurityModeActive"
+                                )
+                            })
                     }
 
                     // Language Icon and Dropdown Menu
                     Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = if (selectedLocale.language == "en") "ENG" else "FIN",
+                        Text(text = if (selectedLocale.language == "en") "ENG" else "FIN",
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.clickable { isLanguageMenuExpanded = true }
-                        )
+                            modifier = Modifier.clickable { isLanguageMenuExpanded = true })
 
                         DropdownMenu(
+                            modifier = Modifier.width(120.dp),
                             expanded = isLanguageMenuExpanded,
-                            onDismissRequest = { isLanguageMenuExpanded = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("English") },
-                                onClick = {
-                                    selectedLocale = Locale("en", "FI")
-                                    isLanguageMenuExpanded = false
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Finnish") },
-                                onClick = {
-                                    selectedLocale = Locale("fi", "FI")
-                                    isLanguageMenuExpanded = false
-                                }
-                            )
+                            onDismissRequest = { isLanguageMenuExpanded = false }) {
+                            DropdownMenuItem(text = { Text("English") }, onClick = {
+                                selectedLocale = Locale("en", "FI")
+                                isLanguageMenuExpanded = false
+                            })
+                            DropdownMenuItem(text = { Text("Finnish") }, onClick = {
+                                selectedLocale = Locale("fi", "FI")
+                                isLanguageMenuExpanded = false
+                            })
                         }
                     }
                 }
@@ -153,7 +140,7 @@ fun VoiceAssistantApp(
                 ) {
                     Text(
                         text = "How can I help you today?",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onBackground,
                         textAlign = TextAlign.Center
                     )
@@ -199,131 +186,83 @@ fun VoiceAssistantApp(
             ) {
                 // Security Mode Section
                 if (isSecurityModeActive) {
-                    Column(modifier = Modifier.fillMaxWidth()) {
-                        // Toggle Button to Switch Between /chat and /record
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.End,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(if (isChatActive) "Chat Mode" else "Record Mode")
-                            Spacer(modifier = Modifier.width(16.dp))
-                            Switch(
-                                checked = isChatActive,
-                                onCheckedChange = { isChatActive = it }
-                            )
-                        }
+                    BottomMessageBar(isChatActive = isChatActive,
+                        customMessage = customMessage,
+                        onMessageChange = { customMessage = it },
+                        onToggleChatMode = { isChatActive = !isChatActive },
+                        onSendMessage = {
+                            val messageToServer = customMessage
+                            val route = if (isChatActive) "/chat" else "/record"
+                            chatHistory.add(messageToServer to (if (isChatActive) MessageType.Chat else MessageType.Record))
 
-                        // Text Box and Send Button
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            TextField(
-                                value = customMessage,
-                                onValueChange = { customMessage = it },
-                                label = { Text("Enter Message") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Button(
-                                onClick = {
-                                    val messageToServer = customMessage
-                                    val route = if (isChatActive) "/chat" else "/record"
-                                    chatHistory.add(messageToServer to (if (isChatActive) MessageType.Chat else MessageType.Record))
-
-
-                                    coroutineScope.launch {
-                                        if (route == "/chat") {
-                                            NetworkUtils.sendToChatAsync(
-                                                sessionID,
-                                                messageToServer,
-                                                selectedLocale
-                                            ) { serverResponse ->
-                                                chatHistory.add(serverResponse to MessageType.Server)
-                                                if (textToSpeech.isSpeaking) {
-                                                    textToSpeech.stop()
-                                                }
-                                                if (selectedLocale.language == "fi") {
-                                                    textToSpeech.setLanguage(Locale("fi", "FI"))
-                                                } else {
-                                                    textToSpeech.setLanguage(Locale("en", "US"))
-                                                }
-                                                textToSpeech.speak(
-                                                    serverResponse,
-                                                    TextToSpeech.QUEUE_FLUSH,
-                                                    null,
-                                                    null
-                                                )
-                                            }
-                                        } else if (route === "/record") {
-                                            NetworkUtils.sendToRecordAsync(
-                                                sessionID,
-                                                messageToServer,
-                                                selectedLocale
-                                            ) { serverResponse ->
-                                                chatHistory.add(serverResponse to MessageType.Server)
-                                                if (textToSpeech.isSpeaking) {
-                                                    textToSpeech.stop()
-                                                }
-                                                if (selectedLocale.language == "fi") {
-                                                    textToSpeech.setLanguage(Locale("fi", "FI"))
-                                                } else {
-                                                    textToSpeech.setLanguage(Locale("en", "US"))
-                                                }
-                                                textToSpeech.speak(
-                                                    serverResponse,
-                                                    TextToSpeech.QUEUE_FLUSH,
-                                                    null,
-                                                    null
-                                                )
-                                            }
+                            coroutineScope.launch {
+                                if (route === "/chat") {
+                                    NetworkUtils.sendToChatAsync(
+                                        sessionID, messageToServer, selectedLocale
+                                    ) { serverResponse ->
+                                        chatHistory.add(serverResponse to MessageType.Server)
+                                        if (textToSpeech.isSpeaking) {
+                                            textToSpeech.stop()
                                         }
+                                        if (selectedLocale.language == "fi") {
+                                            textToSpeech.setLanguage(Locale("fi", "FI"))
+                                        } else {
+                                            textToSpeech.setLanguage(Locale("en", "US"))
+                                        }
+                                        textToSpeech.speak(
+                                            serverResponse, TextToSpeech.QUEUE_FLUSH, null, null
+                                        )
                                     }
-                                    customMessage = "" // Clear the input
+                                } else if (route === "/record") {
+                                    NetworkUtils.sendToRecordAsync(
+                                        sessionID, messageToServer, selectedLocale
+                                    ) { serverResponse ->
+                                        chatHistory.add(serverResponse to MessageType.Server)
+                                        if (textToSpeech.isSpeaking) {
+                                            textToSpeech.stop()
+                                        }
+                                        if (selectedLocale.language == "fi") {
+                                            textToSpeech.setLanguage(Locale("fi", "FI"))
+                                        } else {
+                                            textToSpeech.setLanguage(Locale("en", "US"))
+                                        }
+                                        textToSpeech.speak(
+                                            serverResponse, TextToSpeech.QUEUE_FLUSH, null, null
+                                        )
+                                    }
                                 }
-                            ) {
-                                Text("Send")
                             }
-                        }
-                    }
+                            customMessage = "" // Clear the input
+                        })
                 } else {
                     // Default Bottom Section with Chat and Record Icons
-                    IconButton(
-                        onClick = {
-                            textToSpeech.stop()
-                            isChatActive = true
-                            isRecordActive = false
-                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/chat", textToSpeech)
-                        },
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ChatBubble,
-                            contentDescription = "Chat",
-                            tint = if (isChatActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground
+                    BottomAssistantBar(onChatClick = {
+                        textToSpeech.stop()
+                        isChatActive = true
+                        isRecordActive = false
+                        SpeechManager.startListening(
+                            speechRecognizer,
+                            selectedLocale,
+                            sessionID,
+                            chatHistory,
+                            coroutineScope,
+                            "/chat",
+                            textToSpeech
                         )
-                    }
-                    IconButton(
-                        onClick = {
-                            textToSpeech.stop()
-                            isRecordActive = true
-                            isChatActive = false
-                            SpeechManager.startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, "/record", textToSpeech)
-
-                        },
-                        modifier = Modifier.size(64.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.NoteAlt,
-                            contentDescription = "Record",
-                            tint = if (isRecordActive) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground
+                    }, onRecordClick = {
+                        textToSpeech.stop()
+                        isChatActive = false
+                        isRecordActive = true
+                        SpeechManager.startListening(
+                            speechRecognizer,
+                            selectedLocale,
+                            sessionID,
+                            chatHistory,
+                            coroutineScope,
+                            "/record",
+                            textToSpeech
                         )
-                    }
+                    })
                 }
             }
         }
