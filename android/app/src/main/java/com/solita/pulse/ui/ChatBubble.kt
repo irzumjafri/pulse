@@ -21,9 +21,9 @@ import com.solita.pulse.models.MessageType
 fun ChatBubble(message: String, messageType: MessageType) {
     // Define light and dark mode colors for each message type
     val (lightBubbleColor, darkBubbleColor) = when (messageType) {
-        MessageType.Chat -> Pair(
-            Color(0xFFAEE6FF), Color(0xFF1E3A5A)
-        ) // Light: #AEE6FF, Dark: #1E3A5A
+        MessageType.Chat -> Pair(MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.primaryContainer)
+
         MessageType.Record -> Pair(
             Color(0xFFFF7A90), Color(0xFF5A202F)
         ) // Light: #FF7A90, Dark: #5A202F

@@ -3,6 +3,7 @@ package com.solita.pulse.ui
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,11 +24,16 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.animation.animateColor
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,8 +41,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.graphicsLayer
 import com.solita.pulse.models.MessageType
 import com.solita.pulse.network.NetworkUtils
 import com.solita.pulse.speech.SpeechManager
@@ -57,7 +68,40 @@ fun VoiceAssistantApp(
     var isRecordActive by remember { mutableStateOf(false) }
     var isSecurityModeActive by remember { mutableStateOf(false) }
     var isLanguageMenuExpanded by remember { mutableStateOf(false) }
+    var isListening by remember { mutableIntStateOf(0) }
     var customMessage by remember { mutableStateOf("") }
+
+    fun updateIsListening(newValue: Int) {
+        if (newValue in 0..2) {
+            isListening = newValue
+        } else {
+            Log.e("VoiceAssistantApp", "Invalid value for isListening: $newValue")
+        }
+    }
+
+    val animatedColor1 by animateColorAsState(
+        targetValue = when (isListening) {
+            1 -> colorScheme.primaryContainer.copy(alpha = 0.5f)
+            2 -> Color(0xFF5A202F).copy(alpha = 0.5f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing), label = ""
+    )
+    val animatedColor2 by animateColorAsState(
+        targetValue = when (isListening) {
+            1 -> colorScheme.primary.copy(alpha = 0.2f)
+            2 -> Color(0xFFFF7A90).copy(alpha = 0.2f)
+            else -> Color.Transparent
+        },
+        animationSpec = tween(durationMillis = 1000, easing = FastOutLinearInEasing), label = ""
+    )
+
+    val backgroundGradient =
+        Brush.verticalGradient(
+            listOf(Color.Transparent, animatedColor1, animatedColor2)
+        )
+    if (isListening == 0) {
+            }
 
 
     LaunchedEffect(chatHistory.size) {
@@ -66,12 +110,15 @@ fun VoiceAssistantApp(
         }
     }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+    Scaffold(
+        modifier = Modifier.fillMaxSize()
+    ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.SpaceBetween
+                .background(backgroundGradient, alpha = 1f)
+                .graphicsLayer { alpha = 0.99f }
+                .fillMaxSize(), verticalArrangement = Arrangement.SpaceBetween
         ) {
             // Top section with Logo and Icons
             Row(
@@ -84,7 +131,7 @@ fun VoiceAssistantApp(
                 Text(
                     text = "Pulse",
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground
+                    color = colorScheme.onBackground
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -94,7 +141,7 @@ fun VoiceAssistantApp(
                     Box(contentAlignment = Alignment.Center) {
                         Icon(imageVector = Icons.Default.Security,
                             contentDescription = "Private Mode",
-                            tint = MaterialTheme.colorScheme.onBackground,
+                            tint = colorScheme.onBackground,
                             modifier = Modifier.clickable {
                                 // Toggle security mode
                                 isSecurityModeActive = !isSecurityModeActive
@@ -109,11 +156,10 @@ fun VoiceAssistantApp(
                     Box(contentAlignment = Alignment.Center) {
                         Text(text = if (selectedLocale.language == "en") "ENG" else "FIN",
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = colorScheme.onBackground,
                             modifier = Modifier.clickable { isLanguageMenuExpanded = true })
 
-                        DropdownMenu(
-                            modifier = Modifier.width(120.dp),
+                        DropdownMenu(modifier = Modifier.width(120.dp),
                             expanded = isLanguageMenuExpanded,
                             onDismissRequest = { isLanguageMenuExpanded = false }) {
                             DropdownMenuItem(text = { Text("English") }, onClick = {
@@ -134,14 +180,14 @@ fun VoiceAssistantApp(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "How can I help you today?",
                         style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onBackground,
+                        color = colorScheme.onBackground,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -149,7 +195,7 @@ fun VoiceAssistantApp(
                         Text(
                             text = "Say \"Hey Pulse\" or \"Record Pulse\" or press a button to get started.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground,
+                            color = colorScheme.onBackground,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -170,12 +216,13 @@ fun VoiceAssistantApp(
                     }
                     if (currentUserMessage.isNotEmpty()) {
                         item {
-                            ChatBubble(message = currentUserMessage, messageType = MessageType.Chat)
+                            ChatBubble(
+                                message = currentUserMessage, messageType = MessageType.Chat
+                            )
                         }
                     }
                 }
             }
-
             // Bottom Navigation Section with Toggle Button
             Row(
                 modifier = Modifier
@@ -247,7 +294,8 @@ fun VoiceAssistantApp(
                             chatHistory,
                             coroutineScope,
                             "/chat",
-                            textToSpeech
+                            textToSpeech,
+                            ::updateIsListening
                         )
                     }, onRecordClick = {
                         textToSpeech.stop()
@@ -260,11 +308,14 @@ fun VoiceAssistantApp(
                             chatHistory,
                             coroutineScope,
                             "/record",
-                            textToSpeech
+                            textToSpeech,
+                            ::updateIsListening
                         )
                     })
                 }
             }
         }
     }
+
+
 }

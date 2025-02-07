@@ -24,8 +24,9 @@ object SpeechManager {
         sessionID: String,
         chatHistory: MutableList<Pair<String, MessageType>>,
         coroutineScope: CoroutineScope,
-        route: String,
-        textToSpeech: TextToSpeech
+        route:String,
+        textToSpeech: TextToSpeech,
+        isListening: (Int) -> Unit
     ) {
 
         Log.d("Recognizing Speech :", "$selectedLocale")
@@ -47,9 +48,12 @@ object SpeechManager {
                 override fun onReadyForSpeech(params: Bundle?) {
                     if (route === "/chat") {
                         chatHistory.add("Listening..." to MessageType.Chat)
+                        isListening(1)
                     } else {
-                        chatHistory.add("Listening..." to MessageType.Record)
+                        chatHistory.add("Recording..." to MessageType.Record)
+                        isListening(2)
                     }
+
                 }
 
                 override fun onResults(results: Bundle?) {
@@ -83,7 +87,7 @@ object SpeechManager {
                                         }
 
                                         override fun onDone(utteranceId: String) {
-                                            startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, route, textToSpeech)
+                                            startListening(speechRecognizer, selectedLocale, sessionID, chatHistory, coroutineScope, route, textToSpeech, isListening)
                                         }
 
                                         override fun onError(utteranceId: String?) {
@@ -122,7 +126,8 @@ object SpeechManager {
                 }
 
                 override fun onError(error: Int) {
-                    if(chatHistory[chatHistory.size -1].first == "Listening..."){
+                    isListening(0)
+                    if(chatHistory[chatHistory.size -1].first == "Listening..." || chatHistory[chatHistory.size -1].first == "Recording...") {
                         chatHistory.removeAt(chatHistory.size - 1)
                     }
 
@@ -140,8 +145,8 @@ object SpeechManager {
                 }
 
                 override fun onEvent(eventType: Int, params: Bundle?) {}
-                override fun onEndOfSpeech() {}
-                override fun onBeginningOfSpeech() {}
+                override fun onEndOfSpeech() { isListening(0) }
+                override fun onBeginningOfSpeech() { isListening(if (route == "/chat") 1 else 2) }
                 override fun onBufferReceived(buffer: ByteArray?) {}
                 override fun onRmsChanged(rmsdB: Float) {}
             })
