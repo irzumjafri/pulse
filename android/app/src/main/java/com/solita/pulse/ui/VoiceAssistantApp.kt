@@ -283,7 +283,9 @@ fun VoiceAssistantApp(
                         })
                 } else {
                     // Default Bottom Section with Chat and Record Icons
-                    BottomAssistantBar(onChatClick = {
+                    BottomAssistantBar(
+                        isListening,
+                        onChatClick = {
                         textToSpeech.stop()
                         isChatActive = true
                         isRecordActive = false

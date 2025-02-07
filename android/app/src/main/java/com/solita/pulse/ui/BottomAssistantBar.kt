@@ -1,6 +1,10 @@
 package com.solita.pulse.ui
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -18,19 +22,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.StickyNote2
 import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 
 @Composable
 fun BottomAssistantBar(
+    isListening: Int,
     onChatClick: () -> Unit,
     onRecordClick: () -> Unit
 ) {
@@ -42,12 +47,48 @@ fun BottomAssistantBar(
         verticalAlignment = Alignment.CenterVertically
     ) {
 
+        val animatedChatColor by animateColorAsState(
+            targetValue = if (isListening == 1) MaterialTheme.colorScheme.primary.copy(alpha = 0.8f) else MaterialTheme.colorScheme.primary,
+            animationSpec = tween(
+                durationMillis = 500
+            ),
+
+            label = "background"
+        )
+
+        val animatedChatBorderColor by animateColorAsState(
+            targetValue = if (isListening == 1) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f) else Color.Transparent,
+            animationSpec = tween(
+                durationMillis = 500
+            ),
+
+            label = "border"
+        )
+        val animatedRecordColor by animateColorAsState(
+            targetValue = if (isListening == 2) if (isSystemInDarkTheme()) Color(0xFF5A202F).copy(0.8f) else Color(0xFFFF7A90).copy(0.8f) else if (isSystemInDarkTheme()) Color(0xFF5A202F) else Color(0xFFFF7A90),
+            animationSpec = tween(
+                durationMillis = 500
+            ),
+
+            label = "background"
+        )
+
+        val animatedRecordBorderColor by animateColorAsState(
+            targetValue = if (isListening == 2) if (isSystemInDarkTheme()) Color(0xFFFF7A90).copy(0.7f) else Color(0xFF5A202F).copy(0.8f) else (Color.Transparent),
+            animationSpec = tween(
+                durationMillis = 500
+            ),
+
+            label = "background"
+        )
+
         Box(
             modifier = Modifier
                 .weight(1f)
                 .defaultMinSize(minWidth = 100.dp)
-                .clip(RoundedCornerShape(50)) // Pill shape
-                .background(MaterialTheme.colorScheme.primary)
+                .border(width = 2.dp, color = animatedChatBorderColor, shape = RoundedCornerShape(50))
+                .clip(RoundedCornerShape(50))
+                .background(animatedChatColor)
                 .padding(8.dp)
                 .clickable { onChatClick() },
 
@@ -80,7 +121,8 @@ fun BottomAssistantBar(
                 .weight(1f)
                 .defaultMinSize(minWidth = 100.dp)
                 .clip(RoundedCornerShape(50))
-                .background(if (isSystemInDarkTheme()) Color(0xFF5A202F) else Color(0xFFFF7A90))
+                .border(width = 2.dp, color = animatedRecordBorderColor, shape = RoundedCornerShape(50))
+                .background(animatedRecordColor)
                 .padding(8.dp)
 
                 .clickable { onRecordClick() },
@@ -110,6 +152,7 @@ fun BottomAssistantBar(
                     color = if (isSystemInDarkTheme()) Color(0xFFFF7A90) else Color(0xFF5A202F)
                 )
             }
+
         }
 
     }
