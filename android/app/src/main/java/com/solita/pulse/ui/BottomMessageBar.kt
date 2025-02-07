@@ -1,6 +1,7 @@
 package com.solita.pulse.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -10,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun BottomMessageBar(
@@ -31,7 +34,16 @@ fun BottomMessageBar(
         ) {
             Text(if (isChatActive) "Chat Mode" else "Record Mode")
             Spacer(modifier = Modifier.width(16.dp))
-            Switch(checked = isChatActive, onCheckedChange = { onToggleChatMode() })
+            Switch(
+                checked = isChatActive,
+                onCheckedChange = { onToggleChatMode() },
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.primary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary.copy(0.7f),
+                    uncheckedThumbColor = if (isSystemInDarkTheme()) Color(0xFFFF7A90) else Color(0xFF5A202F),
+                    uncheckedTrackColor = if (isSystemInDarkTheme()) Color(0xFF5A202F) else Color(0xFFFF7A90)
+                )
+            )
         }
 
         // Text Box and Send Button
