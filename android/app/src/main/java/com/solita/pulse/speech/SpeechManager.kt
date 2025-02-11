@@ -77,9 +77,9 @@ object SpeechManager {
                                         textToSpeech.stop()
                                     }
                                     if (selectedLocale.language == "fi") {
-                                        textToSpeech.setLanguage(Locale("fi", "FI"))
+                                        textToSpeech.setLanguage(Locale("fi-FI"))
                                     } else {
-                                        textToSpeech.setLanguage(Locale("en", "US"))
+                                        textToSpeech.setLanguage(Locale("en-US"))
                                     }
                                     textToSpeech.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
                                         override fun onStart(utteranceId: String) {
@@ -110,9 +110,9 @@ object SpeechManager {
                                         textToSpeech.stop()
                                     }
                                     if (selectedLocale.language == "fi") {
-                                        textToSpeech.setLanguage(Locale("fi", "FI"))
+                                        textToSpeech.setLanguage(Locale("fi-FI"))
                                     } else {
-                                        textToSpeech.setLanguage(Locale("en", "US"))
+                                        textToSpeech.setLanguage(Locale("en-US"))
                                     }
                                     textToSpeech.speak(
                                         serverResponse, TextToSpeech.QUEUE_FLUSH, null, "RECORD_TTS"

@@ -163,7 +163,7 @@ fun VoiceAssistantApp(
                             expanded = isLanguageMenuExpanded,
                             onDismissRequest = { isLanguageMenuExpanded = false }) {
                             DropdownMenuItem(text = { Text("English") }, onClick = {
-                                selectedLocale = Locale("en", "FI")
+                                selectedLocale = Locale("en", "US")
                                 isLanguageMenuExpanded = false
                             })
                             DropdownMenuItem(text = { Text("Finnish") }, onClick = {

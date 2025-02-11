@@ -43,7 +43,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        textToSpeech = TextToSpeech(this, this)
+        textToSpeech = TextToSpeech(this, this, "com.google.android.tts")
 
         setContent {
             PulseTheme {
