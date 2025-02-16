@@ -1,5 +1,6 @@
 package com.solita.pulse.ui
 
+import android.content.Context
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
 import android.util.Log
@@ -26,12 +27,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.colorScheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Text
-import androidx.compose.animation.animateColor
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -46,17 +46,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import com.solita.pulse.models.MessageType
 import com.solita.pulse.network.NetworkUtils
+import com.solita.pulse.speech.HotwordDetector
 import com.solita.pulse.speech.SpeechManager
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 @Composable
 fun VoiceAssistantApp(
-    speechRecognizer: SpeechRecognizer, textToSpeech: TextToSpeech, sessionID: String
+    context: Context, speechRecognizer: SpeechRecognizer, textToSpeech: TextToSpeech, sessionID: String
 ) {
 
     var selectedLocale by remember { mutableStateOf(Locale("en", "US")) }
@@ -70,6 +71,19 @@ fun VoiceAssistantApp(
     var isLanguageMenuExpanded by remember { mutableStateOf(false) }
     var isListening by remember { mutableIntStateOf(0) }
     var customMessage by remember { mutableStateOf("") }
+    var hotWordDetected by remember { mutableIntStateOf(0) }
+    fun updateHotWordDetected(newValue: Int) {
+        hotWordDetected = newValue
+    }
+    val hotwordDetector = remember {
+        HotwordDetector(
+            context = context,
+            ::updateHotWordDetected
+        )
+    }
+
+
+
 
     fun updateIsListening(newValue: Int) {
         if (newValue in 0..2) {
@@ -100,13 +114,64 @@ fun VoiceAssistantApp(
         Brush.verticalGradient(
             listOf(Color.Transparent, animatedColor1, animatedColor2)
         )
-    if (isListening == 0) {
-            }
-
 
     LaunchedEffect(chatHistory.size) {
         if (chatHistory.isNotEmpty()) {
             listState.animateScrollToItem(chatHistory.size - 1)
+        }
+    }
+
+    LaunchedEffect(hotWordDetected) {
+        when (hotWordDetected) {
+            1 -> {
+                textToSpeech.stop()
+                isChatActive = true
+                isRecordActive = false
+                SpeechManager.startListening(
+                    speechRecognizer,
+                    selectedLocale,
+                    sessionID,
+                    chatHistory,
+                    coroutineScope,
+                    "/chat",
+                    textToSpeech,
+                    ::updateIsListening
+                )
+            }
+            2 -> {
+                textToSpeech.stop()
+                isChatActive = false
+                isRecordActive = true
+                SpeechManager.startListening(
+                    speechRecognizer,
+                    selectedLocale,
+                    sessionID,
+                    chatHistory,
+                    coroutineScope,
+                    "/record",
+                    textToSpeech,
+                    ::updateIsListening
+                )
+            }
+            else -> {
+                Log.d("VoiceAssistantApp", "No Hotword Detected.")
+            }
+        }
+    }
+
+
+
+    // Start hotword detection when the app launches
+    LaunchedEffect(Unit) {
+        Log.d("VoiceAssistantApp", "Starting Hotword Detection")
+        hotwordDetector.startHotwordDetection()
+    }
+
+    // Clean up hotword detection when the app is disposed
+    DisposableEffect(Unit) {
+        onDispose {
+            Log.d("VoiceAssistantApp", "Stopping Hotword Detection")
+            hotwordDetector.stopHotwordDetection()
         }
     }
 
@@ -313,6 +378,7 @@ fun VoiceAssistantApp(
                             textToSpeech,
                             ::updateIsListening
                         )
+
                     })
                 }
             }

@@ -1,3 +1,14 @@
+import java.util.Properties
+import java.io.FileInputStream
+
+val properties = Properties().apply {
+    val secretsFile = rootProject.file("secrets.properties")
+    if (secretsFile.exists()) {
+        load(FileInputStream(secretsFile))
+    }
+}
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -16,7 +27,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "PORCUPINE_ACCESS_KEY", "\"${properties["PORCUPINE_ACCESS_KEY"] ?: ""}\"")
+
     }
+
+    buildFeatures {
+        buildConfig = true // This enables BuildConfig generation
+    }
+
 
     buildTypes {
         release {
@@ -66,4 +84,5 @@ dependencies {
     implementation (libs.androidx.foundation)
     implementation (libs.androidx.activity.compose.v172)
     implementation (libs.ui.tooling)
+    implementation(libs.porcupine.android)
 }

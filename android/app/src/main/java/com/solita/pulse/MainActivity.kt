@@ -10,8 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.runtime.*
-import androidx.compose.ui.tooling.preview.Preview
 import com.solita.pulse.ui.VoiceAssistantApp
 import com.solita.pulse.ui.theme.PulseTheme
 import java.util.*
@@ -47,7 +45,7 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
 
         setContent {
             PulseTheme {
-                VoiceAssistantApp(speechRecognizer = speechRecognizer, textToSpeech = textToSpeech, sessionID=sessionID)
+                VoiceAssistantApp(context = this, speechRecognizer = speechRecognizer, textToSpeech = textToSpeech, sessionID=sessionID)
             }
         }
     }
@@ -69,14 +67,5 @@ class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
         super.onDestroy()
         speechRecognizer.destroy()
         textToSpeech.shutdown()
-    }
-}
-
-
-@Preview(showBackground = true)
-@Composable
-fun VoiceInputAppPreview() {
-    PulseTheme {
-        VoiceAssistantApp(speechRecognizer = SpeechRecognizer.createSpeechRecognizer(null), textToSpeech = TextToSpeech(null, null), sessionID="user" )
     }
 }
