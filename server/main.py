@@ -12,7 +12,7 @@ import time
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all origins
 
-# Initialize model and prompt template
+# Initialize model and prompt templates
 chatTemplate = """
 Answer the question below, prioritizing information from the provided context.  If you must provide information outside the context, explicitly state that it is not from the provided data.  Do not fabricate information.
 Current Time: {current_time}
@@ -27,7 +27,7 @@ Question: {question}
 
 Instructions:
 
-*   Be concise and clear in your answer.  Avoid unnecessary details.
+*   Be concise and clear in your answer.  Avoid any details that might not be useful to your fellow nurse.
 *   Start by addressing any urgent alerts or recent updates (based on the provided timestamps).
 *   Do not repeat information already present in the context unless specifically asked to.
 *   Answer in a natural, human-like conversational style.
@@ -109,7 +109,7 @@ def get_patient_notes(patient_id):
         print(f"Nurse notes processed for Patient ID: {patient_id}")
         print(nurse_notes_result)
         nurse_end_time = time.time()
-        print(f"Nurse Notes AI Procssing time: {nurse_end_time - nurse_start_time} seconds")
+        print(f"Nurse Notes AI Processing time: {nurse_end_time - nurse_start_time} seconds")
         return nurse_notes_result
     except Exception as e:
         return [{"date": "N/A", "note": f"Error processing nurse notes: {e}"}]
@@ -123,7 +123,8 @@ def get_patient_details_by_room(room_number):
         return (
             f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
-            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID'],}, Last Update: {patient['Last Update']}, "
+            f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, Last Update: {patient['Last Update']}, "
+            f"Patient Care Details: {patient['Patient Care Details']}"
         ), patient_id
     return None, None
 
@@ -137,6 +138,7 @@ def get_patient_details_by_name(patient_name):
             f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
             f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, Last Update: {patient['Last Update']}, "
+            f"Patient Care Details: {patient['Patient Care Details']}"
         ), patient_id
     return None, None
 
@@ -148,13 +150,11 @@ def chat():
     user_input = data.get("message")
     user_language = data.get("language")
 
-    print("Request recieved from user:", user_id)
+    print("Request received from user:", user_id)
     print("Message:", user_input)
     print("Language:", user_language)
 
-
     current_global_context = global_context + f"\nRespond in {'Finnish' if user_language == 'fi' else 'English'}."
-
 
     # # Detect language
     # try:
@@ -173,22 +173,35 @@ def chat():
 
     context = current_global_context
 
+    # Identify patient from the user input (by room number or name)
     patient_details, patient_id = None, None
     for room_number in patient_data["Room Number"].unique():
         if str(room_number) in user_input:
             patient_details, patient_id = get_patient_details_by_room(room_number)
-            break
+            if patient_details:
+                break
 
     if not patient_details:
         for name in patient_data["Patient Name"]:
             if name.lower() in user_input.lower():
                 patient_details, patient_id = get_patient_details_by_name(name)
-                break
+                if patient_details:
+                    break
 
+    # Reset or update the user context if a new patient is detected
     if patient_details:
-        user_contexts[user_id]["patient_id"] = patient_id
-        user_contexts[user_id]["patient_details"] = patient_details
-        user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
+        if user_contexts[user_id]["patient_id"] is not None and user_contexts[user_id]["patient_id"] != patient_id:
+            print("New patient detected. Resetting user context.")
+            user_contexts[user_id] = {
+                "patient_id": patient_id,
+                "patient_details": patient_details,
+                "nurse_notes": get_patient_notes(patient_id),
+                "chat_history": []  # Reset chat history as well
+            }
+        else:
+            user_contexts[user_id]["patient_id"] = patient_id
+            user_contexts[user_id]["patient_details"] = patient_details
+            user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
 
     context += "\nChat History:\n" + "\n".join(
         [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
@@ -259,19 +272,25 @@ def record():
                     if potential_patient_details:
                         break
 
-        if not potential_patient_details:
+        if potential_patient_details:
+            # Reset user context if a new patient is detected
+            if user_contexts[user_id]["patient_id"] is None or user_contexts[user_id]["patient_id"] != potential_patient_id:
+                print("New patient detected in record. Resetting user context.")
+                user_contexts[user_id] = {
+                    "patient_id": potential_patient_id,
+                    "patient_details": potential_patient_details,
+                    "nurse_notes": get_patient_notes(potential_patient_id),
+                    "chat_history": []  # Reset chat history as well
+                }
+            patient_id = potential_patient_id
+            patient_details = potential_patient_details
+        else:
             return jsonify({"error": "Patient room number or name required to save note."}), 400
-
-        # Update user context with the newly identified patient
-        patient_id = potential_patient_id
-        patient_details = potential_patient_details
-        user_contexts[user_id]["patient_id"] = patient_id
-        user_contexts[user_id]["patient_details"] = patient_details
 
     # Step 2: Update nurse notes in user context
     user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
 
-    # Add the new note to nurse notes
+    # Add the new note to nurse notes in the context
     new_note = f"{current_date}: {patient_note}\n"
     if isinstance(user_contexts[user_id]["nurse_notes"], str):
         user_contexts[user_id]["nurse_notes"] += new_note
@@ -307,7 +326,6 @@ def record():
 
     return jsonify({"response": result}), 200
 
-
 @app.route('/set_global_context', methods=['POST'])
 def set_global_context():
     global global_context
@@ -320,7 +338,6 @@ def set_global_context():
 def test():
     return jsonify({"message": "Server is running!"}), 200
 
-
 if __name__ == '__main__':
     # Start the Flask app
-    app.run(debug=True, host="0.0.0.0", port=5000)  
+    app.run(debug=True, host="0.0.0.0", port=5000)

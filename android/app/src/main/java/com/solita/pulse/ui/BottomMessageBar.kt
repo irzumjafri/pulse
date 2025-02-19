@@ -21,9 +21,9 @@ fun BottomMessageBar(
     onMessageChange: (String) -> Unit,
     onSendMessage: () -> Unit,
     onToggleChatMode: () -> Unit,
-    modifier: Modifier = Modifier
+    selectedLocale: String
 ) {
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         // Toggle Button to Switch Between /chat and /record
         Row(
             modifier = Modifier
@@ -32,7 +32,7 @@ fun BottomMessageBar(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(if (isChatActive) "Chat Mode" else "Record Mode")
+            Text(if (isChatActive) if (selectedLocale == "fi") "Chat-tila" else "Chat Mode" else if (selectedLocale == "fi") "Kirjoitustila" else "Record Mode")
             Spacer(modifier = Modifier.width(16.dp))
             Switch(
                 checked = isChatActive,
@@ -56,7 +56,7 @@ fun BottomMessageBar(
             TextField(
                 value = customMessage,
                 onValueChange = onMessageChange,
-                label = { Text(if (isChatActive) "Ask Pulse" else "Record with Pulse") },
+                label = { Text(if (isChatActive) if (selectedLocale == "fi") "Kysy Pulssilta" else "Ask Pulse" else if (selectedLocale == "fi") "Kirjoita Pulssilla" else "Record with Pulse") },
                 colors = TextFieldDefaults.colors(
                     focusedIndicatorColor = MaterialTheme.colorScheme.surface,
                     unfocusedIndicatorColor = MaterialTheme.colorScheme.surface,

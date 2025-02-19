@@ -1,11 +1,21 @@
-Patient ID,Patient Name,Room Number,Condition,Diagnosis,Undergoing Treatments,Assigned Nurse ID,Last Update
-1,John Doe,115,Critical,Migraine,Insulin Therapy,117,2025-01-01 00:00:00
-2,Mia Tom,101,Recovering,Fracture,IV Therapy,111,2025-01-01 00:00:00
-3,Ella Baker,121,Critical,Hypertension,Oxygen Support,114,2025-01-01 00:00:00
-4,Emma Wilson,118,Critical,COVID-19,Physiotherapy,102,2025-01-01 00:00:00
-5,Charlie Davis,102,Critical,Diabetes,Physiotherapy,108,2025-01-01 00:00:00
-6,Michael Wright,137,Critical,Hypertension,Physiotherapy,106,2025-01-01 00:00:00
-7,Jane Smith,123,Under Observation,Hypertension,Surgery,104,2025-01-01 00:00:00
-8,Ava Scott,138,Recovering,COVID-19,Physiotherapy,129,2025-01-01 00:00:00
-9,Chloe Mitchell,127,Recovering,Pneumonia,Physiotherapy,102,2025-01-01 00:00:00
-10,Charlotte Young,124,Critical,Hypertension,IV Therapy,106,2025-01-01 00:00:00
+Patient ID,Patient Name,Room Number,Condition,Diagnosis,Undergoing Treatments,Assigned Nurse ID,Last Update,Patient Care Details
+1,John Doe,115,Critical,Migraine,Insulin Therapy,117,2025-01-01 00:00:00,Allergic to Penicillin; Monitor for severe headaches
+2,Mia Clark,101,Recovering,Fracture,IV Therapy,111,2025-01-01 00:00:00,Requires assistance with mobility; No heavy lifting
+3,Ella Baker,121,Critical,Hypertension,Oxygen Support,114,2025-01-01 00:00:00,History of stroke; Monitor blood pressure closely
+4,Emma Wilson,118,Critical,COVID-19,Physiotherapy,102,2025-01-01 00:00:00,Immunocompromised; Maintain strict infection control
+5,Charlie Davis,102,Critical,Diabetes,Physiotherapy,108,2025-01-01 00:00:00,Requires regular blood sugar checks; Avoid high-carb meals
+6,Michael Wright,137,Critical,Hypertension,Physiotherapy,106,2025-01-01 00:00:00,Allergic to latex; Use latex-free gloves
+7,Jane Smith,123,Under Observation,Hypertension,Surgery,104,2025-01-01 00:00:00,Anxiety issues; Keep a calm environment
+8,Ava Scott,138,Recovering,COVID-19,Physiotherapy,129,2025-01-01 00:00:00,Prone to dehydration; Nut and Lactose Allergy
+9,Chloe Mitchell,127,Recovering,Pneumonia,Physiotherapy,102,2025-01-01 00:00:00,Asthmatic; Keep inhaler nearby
+10,Charlotte Young,124,Critical,Hypertension,IV Therapy,106,2025-01-01 00:00:00,Heart condition; Monitor for chest pain
+11,Matias Korhonen,201,Critical,Diabetes,Insulin Therapy,210,2025-01-01 00:00:00,Requires regular blood sugar checks; Avoid high-carb meals
+12,Aino Virtanen,205,Recovering,Fracture,Physiotherapy,214,2025-01-01 00:00:00,Needs assistance with mobility; No heavy lifting
+13,Juho Laine,219,Critical,Hypertension,Oxygen Support,218,2025-01-01 00:00:00,History of stroke; Monitor blood pressure closely
+14,Veera Mäkinen,207,Critical,COVID-19,IV Therapy,211,2025-01-01 00:00:00,Immunocompromised; Maintain strict infection control
+15,Elias Heikkinen,215,Under Observation,Migraine,Pain Management,202,2025-01-01 00:00:00,Allergic to Penicillin; Monitor for severe headaches
+16,Helmi Nieminen,202,Recovering,Pneumonia,Physiotherapy,220,2025-01-01 00:00:00,Asthmatic; Keep inhaler nearby
+17,Onni Salonen,233,Critical,Hypertension,IV Therapy,204,2025-01-01 00:00:00,Heart condition; Monitor for chest pain
+18,Saga Lehtonen,208,Critical,Diabetes,Dietary Control,207,2025-01-01 00:00:00,Requires balanced meals; Avoid processed sugars
+19,Arttu Kallio,230,Recovering,COVID-19,Physiotherapy,209,2025-01-01 00:00:00,Prone to dehydration; Nut and Lactose Allergy
+20,Emilia Rantanen,225,Critical,Hypertension,Oxygen Support,212,2025-01-01 00:00:00,Allergic to latex; Use latex-free gloves

@@ -39,7 +39,7 @@ class HotwordDetector(
 ) {
     private var porcupineManager: PorcupineManager? = null
 
-    fun startHotwordDetection() {
+    fun startHotwordDetection(audioData: ByteArray) {
         try {
             // Define the callback for hotword detection
             val wakeWordCallback = PorcupineManagerCallback { keywordIndex ->

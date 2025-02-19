@@ -83,8 +83,6 @@ fun VoiceAssistantApp(
     }
 
 
-
-
     fun updateIsListening(newValue: Int) {
         if (newValue in 0..2) {
             isListening = newValue
@@ -162,18 +160,18 @@ fun VoiceAssistantApp(
 
 
     // Start hotword detection when the app launches
-    LaunchedEffect(Unit) {
-        Log.d("VoiceAssistantApp", "Starting Hotword Detection")
-        hotwordDetector.startHotwordDetection()
-    }
+//    LaunchedEffect(Unit) {
+//        Log.d("VoiceAssistantApp", "Starting Hotword Detection")
+//        hotwordDetector.startHotwordDetection()
+//    }
 
     // Clean up hotword detection when the app is disposed
-    DisposableEffect(Unit) {
-        onDispose {
-            Log.d("VoiceAssistantApp", "Stopping Hotword Detection")
-            hotwordDetector.stopHotwordDetection()
-        }
-    }
+//    DisposableEffect(Unit) {
+//        onDispose {
+//            Log.d("VoiceAssistantApp", "Stopping Hotword Detection")
+//            hotwordDetector.stopHotwordDetection()
+//        }
+//    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize()
@@ -250,15 +248,23 @@ fun VoiceAssistantApp(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "How can I help you today?",
+                        text = if (selectedLocale.language == "fi") "Miten voin auttaa tänään?" else "How can I help you today?" ,
                         style = MaterialTheme.typography.bodyLarge,
                         color = colorScheme.onBackground,
                         textAlign = TextAlign.Center
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+//                    if (!isSecurityModeActive) {
+//                        Text(
+//                            text = "Say \"Hey Pulse\" or \"Record Pulse\" or press a button to get started.",
+//                            style = MaterialTheme.typography.bodyMedium,
+//                            color = colorScheme.onBackground,
+//                            textAlign = TextAlign.Center
+//                        )
+//                    }
                     if (!isSecurityModeActive) {
                         Text(
-                            text = "Say \"Hey Pulse\" or \"Record Pulse\" or press a button to get started.",
+                            text = if (selectedLocale.language == "fi") "Paina nappia ja aloita.?" else "Press a button to get started.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = colorScheme.onBackground,
                             textAlign = TextAlign.Center
@@ -309,10 +315,11 @@ fun VoiceAssistantApp(
 
                             coroutineScope.launch {
                                 if (route === "/chat") {
+                                    chatHistory.add("Pulse AI is Thinking..." to MessageType.Server)
                                     NetworkUtils.sendToChatAsync(
                                         sessionID, messageToServer, selectedLocale
                                     ) { serverResponse ->
-                                        chatHistory.add(serverResponse to MessageType.Server)
+                                        chatHistory[chatHistory.size-1] = serverResponse to MessageType.Server
                                         if (textToSpeech.isSpeaking) {
                                             textToSpeech.stop()
                                         }
@@ -326,10 +333,11 @@ fun VoiceAssistantApp(
                                         )
                                     }
                                 } else if (route === "/record") {
+                                    chatHistory.add("Pulse AI is Thinking..." to MessageType.Server)
                                     NetworkUtils.sendToRecordAsync(
                                         sessionID, messageToServer, selectedLocale
                                     ) { serverResponse ->
-                                        chatHistory.add(serverResponse to MessageType.Server)
+                                        chatHistory[chatHistory.size-1] = serverResponse to MessageType.Server
                                         if (textToSpeech.isSpeaking) {
                                             textToSpeech.stop()
                                         }
@@ -345,7 +353,8 @@ fun VoiceAssistantApp(
                                 }
                             }
                             customMessage = "" // Clear the input
-                        })
+                        },
+                        selectedLocale = selectedLocale.language)
                 } else {
                     // Default Bottom Section with Chat and Record Icons
                     BottomAssistantBar(
@@ -379,7 +388,15 @@ fun VoiceAssistantApp(
                             ::updateIsListening
                         )
 
-                    })
+                    },
+                        onStopClick = {
+                            textToSpeech.stop()
+                            isChatActive = true
+                            isRecordActive = false
+                            SpeechManager.stopListening(speechRecognizer, chatHistory, ::updateIsListening)
+                        },
+                        selectedLocale.language
+                        )
                 }
             }
         }
