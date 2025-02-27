@@ -1,16 +1,22 @@
 # Required imports
 # from langdetect import detect
 import os
+import time
+import pandas as pd
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate
-import pandas as pd
-import time
 
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all origins
+
+# Initialize thread safety lock
+user_contexts_lock = threading.Lock()
+
 
 # Initialize model and prompt templates
 chatTemplate = """
@@ -78,6 +84,211 @@ user_contexts = {}
 patient_data_path = "patient_data.csv"  # Path to the patient data file
 patient_data = pd.read_csv(patient_data_path)
 
+executor = ThreadPoolExecutor(max_workers=5)
+
+
+def process_chat(data):
+    start_time = time.time()
+    user_id = data.get("user_id")
+    user_input = data.get("message")
+    user_language = data.get("language")
+
+    print("Request Starting: ")
+    print("Context User ID: ", user_id)
+    # if user_contexts[user_id] is not None:
+        # print("Patient in Context: ", user_contexts[user_id]["patient_details"])
+
+
+    # print("Request received from user:", user_id)
+    # print("Message:", user_input)
+    # print("Language:", user_language)
+
+    current_global_context = global_context + f"\nRespond in {'Finnish' if user_language == 'fi' else 'English'}."
+
+    # # Detect language
+    # try:
+    #     language = detect(user_input)
+    #     current_global_context = global_context + f"\nRespond in {'Finnish' if language == 'fi' else 'English'}."
+    # except Exception as e:
+    #     return jsonify({"error": f"Language detection failed: {str(e)}"}), 500
+
+    with user_contexts_lock:
+        if user_id not in user_contexts:
+            user_contexts[user_id] = {
+                "patient_id": None,
+                "patient_details": None,
+                "nurse_notes": [],
+                "chat_history": []
+            }
+
+    context = current_global_context
+
+    # Identify patient from the user input (by room number or name)
+    patient_details, patient_id = None, None
+    for room_number in patient_data["Room Number"].unique():
+        if str(room_number) in user_input:
+            patient_details, patient_id = get_patient_details_by_room(room_number)
+            if patient_details:
+                break
+
+    if not patient_details:
+        for name in patient_data["Patient Name"]:
+            if name.lower() in user_input.lower():
+                patient_details, patient_id = get_patient_details_by_name(name)
+                if patient_details:
+                    break
+
+    # Reset or update the user context if a new patient is detected
+    with user_contexts_lock:
+        if patient_details:
+            if user_contexts[user_id]["patient_id"] is not None and user_contexts[user_id]["patient_id"] != patient_id:
+                print("New patient detected. Resetting user context.")
+                user_contexts[user_id] = {
+                    "patient_id": patient_id,
+                    "patient_details": patient_details,
+                    "nurse_notes": get_patient_notes(patient_id),
+                    "chat_history": []  # Reset chat history as well
+                }
+            else:
+                user_contexts[user_id]["patient_id"] = patient_id
+                user_contexts[user_id]["patient_details"] = patient_details
+                user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
+
+
+        context += "\nChat History:\n" + "\n".join(
+            [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
+        )
+
+    print("Calling chat chain...")
+    ai_start_time = time.time()
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    with user_contexts_lock:
+        chat_result = chatChain.invoke({
+            "current_time": current_time,
+            "context": context,
+            "question": user_input,
+            "patient_details": user_contexts[user_id]["patient_details"],
+            "nurse_notes_result": user_contexts[user_id]["nurse_notes"]
+        })
+    print("Chat chain response received.")
+    ai_end_time = time.time()
+    print(f"Chat Response time: {ai_end_time - ai_start_time} seconds")
+
+    with user_contexts_lock:
+        user_contexts[user_id]["chat_history"].append({"user": user_input, "ai": chat_result})
+
+    end_time = time.time()
+    print(f"Total Response time: {end_time - start_time} seconds")
+
+    print("Request Ending: ")
+    print("Context User ID: ", user_id)
+    print("Patient in Context: ", user_contexts[user_id]["patient_details"])
+
+    return chat_result
+
+
+def process_record(data):
+
+    user_id = data.get("user_id")
+    patient_note = data.get("message")
+    current_date = pd.to_datetime("now").strftime("%Y-%m-%d %H:%M:%S")
+
+
+    print("Request Starting: ")
+    print("Context User ID: ", user_id)
+    if user_contexts[user_id] is not None:
+        print("Patient in Context: ", user_contexts[user_id]["patient_details"])
+
+    # print("Request received from user:", user_id)
+    # print("Message:", patient_note)
+    # print("Language:", data.get("language"))
+
+    if not patient_note:
+        return jsonify({"error": "Patient data couldn't be saved due to missing note content."}), 400
+
+    # Ensure user context exists
+    with user_contexts_lock:
+        if user_id not in user_contexts:
+            user_contexts[user_id] = {
+                "patient_id": None,
+                "patient_details": None,
+                "nurse_notes": [],
+                "chat_history": []
+            }
+
+        print("User context:", user_contexts[user_id]["patient_id"])
+
+        if user_contexts[user_id]["patient_id"]:
+            patient_id = user_contexts[user_id]["patient_id"]
+            patient_details = user_contexts[user_id]["patient_details"]
+            print(f"Patient already in context: {patient_details}")
+        else:
+            # Extract potential patient information from the note
+            potential_patient_details, potential_patient_id = None, None
+            for room_number in patient_data["Room Number"].unique():
+                if str(room_number) in patient_note:
+                    potential_patient_details, potential_patient_id = get_patient_details_by_room(room_number)
+                    if potential_patient_details:
+                        break
+
+            if not potential_patient_details:
+                for name in patient_data["Patient Name"]:
+                    if name.lower() in patient_note.lower():
+                        potential_patient_details, potential_patient_id = get_patient_details_by_name(name)
+                        if potential_patient_details:
+                            break
+
+            if potential_patient_details:
+                # Reset user context if a new patient is detected
+                if user_contexts[user_id]["patient_id"] is None or user_contexts[user_id]["patient_id"] != potential_patient_id:
+                    print("New patient detected in record. Resetting user context.")
+                    user_contexts[user_id] = {
+                        "patient_id": potential_patient_id,
+                        "patient_details": potential_patient_details,
+                        "nurse_notes": get_patient_notes(potential_patient_id),
+                        "chat_history": []
+                    }
+                patient_id = potential_patient_id
+                patient_details = potential_patient_details
+            else:
+                return jsonify({"error": "Patient room number or name required to save note."}), 400
+
+    # Write the note to the nurse_notes.csv file
+    new_note_csv = f"{current_date}, {user_id}, {patient_id}, {patient_note}\n"
+    try:
+        with open("nurse_notes.csv", 'a') as file:
+            file.write(new_note_csv)
+    except FileNotFoundError:
+        with open("nurse_notes.csv", 'w') as file:
+            file.write("Date, NurseID, PatientID, Note\n")
+            file.write(new_note_csv)
+
+    # Refresh nurse notes from CSV after writing the new entry
+    with user_contexts_lock:
+        user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
+
+    # Update context for record chain
+    context = global_context
+    context += "\nChat History:\n" + "\n".join(
+        [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
+    )
+
+    print("Calling record chain...")
+    with user_contexts_lock:
+        result = recordChain.invoke({
+            "context": context,
+            "patient_details": user_contexts[user_id]["patient_details"],
+            "patient_note": patient_note
+        })
+        print("Record chain response received.")
+        user_contexts[user_id]["chat_history"].append({"user": patient_note, "ai": result})
+
+    print("Request Ending: ")
+    print("Context User ID: ", user_id)
+    print("Patient in Context: ", user_contexts[user_id]["patient_details"])
+
+
+    return result
 def get_patient_notes(patient_id):
     try:
         nurse_notes = pd.read_csv("nurse_notes.csv")
@@ -121,7 +332,7 @@ def get_patient_details_by_room(room_number):
         patient_id = patient["Patient ID"]
         print(f"Patient detected by room: {room_number}, Name: {patient['Patient Name']}")
         return (
-            f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
+            f"Patient Name: {patient['Patient Name']},SSN : {patient['SSN']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
             f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, Last Update: {patient['Last Update']}, "
             f"Patient Care Details: {patient['Patient Care Details']}"
@@ -135,7 +346,7 @@ def get_patient_details_by_name(patient_name):
         patient_id = patient["Patient ID"]
         print(f"Patient detected by name: {patient_name}")
         return (
-            f"Patient Name: {patient['Patient Name']}, Room Number: {patient['Room Number']}, "
+            f"Patient Name: {patient['Patient Name']},SSN : {patient['SSN']}, Room Number: {patient['Room Number']}, "
             f"Condition: {patient['Condition']}, Diagnosis: {patient['Diagnosis']}, "
             f"Undergoing Treatments: {patient['Undergoing Treatments']}, Assigned Nurse: {patient['Assigned Nurse ID']}, Last Update: {patient['Last Update']}, "
             f"Patient Care Details: {patient['Patient Care Details']}"
@@ -144,187 +355,34 @@ def get_patient_details_by_name(patient_name):
 
 @app.route('/chat', methods=['POST'])
 def chat():
-    start_time = time.time()
-    data = request.json
-    user_id = data.get("user_id")
-    user_input = data.get("message")
-    user_language = data.get("language")
-
-    print("Request received from user:", user_id)
-    print("Message:", user_input)
-    print("Language:", user_language)
-
-    current_global_context = global_context + f"\nRespond in {'Finnish' if user_language == 'fi' else 'English'}."
-
-    # # Detect language
-    # try:
-    #     language = detect(user_input)
-    #     current_global_context = global_context + f"\nRespond in {'Finnish' if language == 'fi' else 'English'}."
-    # except Exception as e:
-    #     return jsonify({"error": f"Language detection failed: {str(e)}"}), 500
-
-    if user_id not in user_contexts:
-        user_contexts[user_id] = {
-            "patient_id": None,
-            "patient_details": None,
-            "nurse_notes": [],
-            "chat_history": []
-        }
-
-    context = current_global_context
-
-    # Identify patient from the user input (by room number or name)
-    patient_details, patient_id = None, None
-    for room_number in patient_data["Room Number"].unique():
-        if str(room_number) in user_input:
-            patient_details, patient_id = get_patient_details_by_room(room_number)
-            if patient_details:
-                break
-
-    if not patient_details:
-        for name in patient_data["Patient Name"]:
-            if name.lower() in user_input.lower():
-                patient_details, patient_id = get_patient_details_by_name(name)
-                if patient_details:
-                    break
-
-    # Reset or update the user context if a new patient is detected
-    if patient_details:
-        if user_contexts[user_id]["patient_id"] is not None and user_contexts[user_id]["patient_id"] != patient_id:
-            print("New patient detected. Resetting user context.")
-            user_contexts[user_id] = {
-                "patient_id": patient_id,
-                "patient_details": patient_details,
-                "nurse_notes": get_patient_notes(patient_id),
-                "chat_history": []  # Reset chat history as well
-            }
-        else:
-            user_contexts[user_id]["patient_id"] = patient_id
-            user_contexts[user_id]["patient_details"] = patient_details
-            user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
-
-    context += "\nChat History:\n" + "\n".join(
-        [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
-    )
-
-    print("Calling chat chain...")
-    ai_start_time = time.time()
-    current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-    chat_result = chatChain.invoke({
-        "current_time": current_time,
-        "context": context,
-        "question": user_input,
-        "patient_details": user_contexts[user_id]["patient_details"],
-        "nurse_notes_result": user_contexts[user_id]["nurse_notes"]
-    })
-    print("Chat chain response received.")
-    ai_end_time = time.time()
-    print(f"Chat Response time: {ai_end_time - ai_start_time} seconds")
-
-    user_contexts[user_id]["chat_history"].append({"user": user_input, "ai": chat_result})
-
-    end_time = time.time()
-    print(f"Total Response time: {end_time - start_time} seconds")
-
-    return jsonify({"response": chat_result})
+    future = executor.submit(process_chat, request.json)
+    response = future.result()
+    return jsonify({"response": response, "patient_name": user_contexts[request.json.get("user_id")["patient_dame"]], "SSN": user_contexts[request.json.get("user_id")["patient_id"]]})
 
 @app.route('/record', methods=['POST'])
 def record():
+    future = executor.submit(process_record, request.json)
+    response = future.result()
+    return jsonify({"response": response}), 200
+
+@app.route('/reset_user_context', methods=['POST'])
+def reset_user_context():
     data = request.json
     user_id = data.get("user_id")
-    patient_note = data.get("message")
-    current_date = pd.to_datetime("now").strftime("%Y-%m-%d %H:%M:%S")
 
-    print("Request received from user:", user_id)
-    print("Message:", patient_note)
-    print("Language:", data.get("language"))
-
-    if not patient_note:
-        return jsonify({"error": "Patient data couldn't be saved due to missing note content."}), 400
-
-    # Ensure user context exists
     if user_id not in user_contexts:
-        user_contexts[user_id] = {
-            "patient_id": None,
-            "patient_details": None,
-            "nurse_notes": [],
-            "chat_history": []
-        }
+        return jsonify({"message": "User context does not exist."}), 400
 
-    # Check if a patient is already in the user's context
-    if user_contexts[user_id]["patient_id"]:
-        patient_id = user_contexts[user_id]["patient_id"]
-        patient_details = user_contexts[user_id]["patient_details"]
-        print(f"Patient already in context: {patient_details}")
-    else:
-        # Step 1: Extract potential patient information from the note
-        potential_patient_details, potential_patient_id = None, None
-        for room_number in patient_data["Room Number"].unique():
-            if str(room_number) in patient_note:
-                potential_patient_details, potential_patient_id = get_patient_details_by_room(room_number)
-                if potential_patient_details:
-                    break
+    user_contexts[user_id] = {
+        "patient_id": None,
+        "patient_details": None,
+        "nurse_notes": [],
+        "chat_history": []
+    }
 
-        if not potential_patient_details:
-            for name in patient_data["Patient Name"]:
-                if name.lower() in patient_note.lower():
-                    potential_patient_details, potential_patient_id = get_patient_details_by_name(name)
-                    if potential_patient_details:
-                        break
+    print(f"User context reset for user: {user_id}")
+    return jsonify({"message": "User context reset successfully."}), 200
 
-        if potential_patient_details:
-            # Reset user context if a new patient is detected
-            if user_contexts[user_id]["patient_id"] is None or user_contexts[user_id]["patient_id"] != potential_patient_id:
-                print("New patient detected in record. Resetting user context.")
-                user_contexts[user_id] = {
-                    "patient_id": potential_patient_id,
-                    "patient_details": potential_patient_details,
-                    "nurse_notes": get_patient_notes(potential_patient_id),
-                    "chat_history": []  # Reset chat history as well
-                }
-            patient_id = potential_patient_id
-            patient_details = potential_patient_details
-        else:
-            return jsonify({"error": "Patient room number or name required to save note."}), 400
-
-    # Step 2: Update nurse notes in user context
-    user_contexts[user_id]["nurse_notes"] = get_patient_notes(patient_id)
-
-    # Add the new note to nurse notes in the context
-    new_note = f"{current_date}: {patient_note}\n"
-    if isinstance(user_contexts[user_id]["nurse_notes"], str):
-        user_contexts[user_id]["nurse_notes"] += new_note
-    else:
-        user_contexts[user_id]["nurse_notes"] = new_note
-
-    # Write the note to the nurse_notes.csv file
-    new_note_csv = f"{current_date}, {user_id}, {patient_id}, {patient_note}\n"
-    try:
-        with open("nurse_notes.csv", 'a') as file:
-            file.write(new_note_csv)
-    except FileNotFoundError:
-        with open("nurse_notes.csv", 'w') as file:
-            file.write("Date, NurseID, PatientID, Note\n")
-            file.write(new_note_csv)
-
-    # Step 3: Update context for record chain
-    context = global_context
-    context += "\nChat History:\n" + "\n".join(
-        [f"User: {entry['user']}\nAI: {entry['ai']}" for entry in user_contexts[user_id]["chat_history"]]
-    )
-
-    print("Calling record chain...")
-    result = recordChain.invoke({
-        "context": context,
-        "patient_details": user_contexts[user_id]["patient_details"],
-        "patient_note": patient_note
-    })
-    print("Record chain response received.")
-
-    # Add the result to chat history
-    user_contexts[user_id]["chat_history"].append({"user": patient_note, "ai": result})
-
-    return jsonify({"response": result}), 200
 
 @app.route('/set_global_context', methods=['POST'])
 def set_global_context():
@@ -340,4 +398,4 @@ def test():
 
 if __name__ == '__main__':
     # Start the Flask app
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000, threaded=True)

@@ -21,6 +21,13 @@ object NetworkUtils {
         sendToServerAsync(userId, message, locale, url, callback)
     }
 
+    fun resetUserContext(userId: String, callback: (String) -> Unit){
+        val url = "$SERVER_ADDRESS/reset_user_context"
+        sendToServerAsync(userId, "", Locale(""),url, callback)
+    }
+
+
+
     fun sendToRecordAsync(userId: String, message: String, locale: Locale, callback: (String) -> Unit) {
         val url = "$SERVER_ADDRESS/record"
         sendToServerAsync(userId, message, locale, url, callback)

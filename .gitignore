@@ -1,3 +1,4 @@
 servervenv/
 server/Dockerfile
 android/secrets.properties
+self_notes.txt

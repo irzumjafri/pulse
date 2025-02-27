@@ -20,8 +20,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +36,8 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -46,6 +51,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.graphics.graphicsLayer
 import com.solita.pulse.models.MessageType
@@ -71,6 +77,10 @@ fun VoiceAssistantApp(
     var isLanguageMenuExpanded by remember { mutableStateOf(false) }
     var isListening by remember { mutableIntStateOf(0) }
     var customMessage by remember { mutableStateOf("") }
+    var serverMessagePopup by remember { mutableStateOf("") }
+    var patientName by remember { mutableStateOf("") }
+    var patientSSN by remember { mutableStateOf("") }
+
     var hotWordDetected by remember { mutableIntStateOf(0) }
     fun updateHotWordDetected(newValue: Int) {
         hotWordDetected = newValue
@@ -200,19 +210,41 @@ fun VoiceAssistantApp(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    val privateModeColor = if (isSecurityModeActive) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    }
+
+                    val privateModeIcon = if(isSecurityModeActive){
+                        Icons.Default.LockOpen
+                    } else{
+                        Icons.Default.Lock
+                    }
                     // Security Icon wrapped in a Box for consistency
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(imageVector = Icons.Default.Security,
-                            contentDescription = "Private Mode",
-                            tint = colorScheme.onBackground,
-                            modifier = Modifier.clickable {
-                                // Toggle security mode
-                                isSecurityModeActive = !isSecurityModeActive
-                                Log.d(
-                                    "VoiceAssistantApp",
-                                    "Security mode toggled: $isSecurityModeActive"
-                                )
-                            })
+                    Button(
+                        onClick = {
+                            // Toggle security mode
+                            isSecurityModeActive = !isSecurityModeActive
+                            Log.d(
+
+                                "VoiceAssistantApp",
+                                "Security mode toggled: $isSecurityModeActive"
+                            )
+                        },
+                        modifier = Modifier.padding(8.dp),
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = privateModeIcon,
+                                tint = privateModeColor,
+                                contentDescription = "Private Mode"
+                            )
+                            Text(text = if(isSecurityModeActive) "Exit Private Mode" else "Enter Private Mode")
+                        }
                     }
 
                     // Language Icon and Dropdown Menu
@@ -226,11 +258,39 @@ fun VoiceAssistantApp(
                             expanded = isLanguageMenuExpanded,
                             onDismissRequest = { isLanguageMenuExpanded = false }) {
                             DropdownMenuItem(text = { Text("English") }, onClick = {
+                                //CALL CONTEXT RESET
+                                NetworkUtils.resetUserContext(sessionID)
+                                {serverResponse ->
+                                    Log.d("VoiceAssistantApp", "Server Response: $serverResponse")
+                                    if (serverResponse.isNotEmpty()) {
+                                        patientName = serverResponse.split(",")[0]
+                                        serverMessagePopup = serverResponse
+                                    }
+                                    chatHistory.clear()
+                                }
+                                if (serverMessagePopup.isNotEmpty()) {
+                                    serverMessagePopup = ""
+                                }
+
                                 selectedLocale = Locale("en", "US")
                                 isLanguageMenuExpanded = false
                             })
                             DropdownMenuItem(text = { Text("Finnish") }, onClick = {
                                 selectedLocale = Locale("fi", "FI")
+                                //CALL CONTEXT RESET
+                                NetworkUtils.resetUserContext(sessionID)
+                                {serverResponse ->
+                                    Log.d("VoiceAssistantApp", "Server Response: $serverResponse")
+                                    if (serverResponse.isNotEmpty()) {
+                                        patientName = serverResponse.split(",")[0]
+                                        serverMessagePopup = serverResponse
+                                    }
+                                    chatHistory.clear()
+                                }
+                                if (serverMessagePopup.isNotEmpty()) {
+                                    serverMessagePopup = ""
+                                }
+
                                 isLanguageMenuExpanded = false
                             })
                         }
@@ -273,6 +333,51 @@ fun VoiceAssistantApp(
 
                 }
             } else {
+                Row(modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+                    .height(50.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically) {
+                    if (patientName.isNotEmpty()) {
+                        Column {
+                            Text(
+                                text = "Patient: $patientName",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = colorScheme.onBackground
+                            )
+                            Text(text = "SSN: $patientSSN",
+                                style = MaterialTheme.typography.bodySmall, color = colorScheme.onBackground)
+                        }
+                    } else{
+                        Text(text = "No Patient in Context",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = colorScheme.onBackground)
+                    }
+
+
+                    Button(
+                        modifier = Modifier.padding(8.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colorScheme.error,
+                            contentColor = colorScheme.onError
+                        ),
+                        onClick = {
+                            // Toggle security mode
+                            chatHistory.clear()
+                            //CALL CONTEXT RESET
+                            NetworkUtils.resetUserContext(sessionID)
+                            {serverResponse ->
+                                Log.d("VoiceAssistantApp", "Server Response: $serverResponse")
+                                if (serverResponse.isNotEmpty()) {
+                                    patientName = ""
+                                }
+                            }
+                        },
+                    ) {
+                        Text(text = "Clear Chat")
+                    }
+                }
                 LazyColumn(
                     state = listState,
                     modifier = Modifier
@@ -356,6 +461,18 @@ fun VoiceAssistantApp(
                         },
                         selectedLocale = selectedLocale.language)
                 } else {
+                    if (serverMessagePopup.isNotEmpty()) {
+                        AlertDialog(
+                            onDismissRequest = { serverMessagePopup = "" },
+                            title = { Text("Langauge Changed Successfully.") },
+                            text = { Text("Your language has been changed to ${if (selectedLocale.language == "fi") "Finnish" else "English"} and chat history has been reset.") },
+                            confirmButton = {
+                                Button(onClick = { serverMessagePopup = "" }) {
+                                    Text("OK")
+                                }
+                            }
+                        )
+                    }
                     // Default Bottom Section with Chat and Record Icons
                     BottomAssistantBar(
                         isListening,

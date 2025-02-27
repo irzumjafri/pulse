@@ -44,6 +44,7 @@ object SpeechManager {
             )
             putExtra(RecognizerIntent.EXTRA_LANGUAGE, speechLanguage)
             putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+            putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 10000)
         }
 
         // Ensure the speechRecognizer is set on the main thread
