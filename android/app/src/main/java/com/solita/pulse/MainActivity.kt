@@ -2,70 +2,69 @@ package com.solita.pulse
 
 import android.Manifest
 import android.os.Bundle
-import android.speech.SpeechRecognizer
-import android.speech.tts.TextToSpeech
+// Removed TextToSpeech imports as Activity no longer handles it directly
 import android.util.Log
 import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+// Removed SpeechRecognizer import
 import com.solita.pulse.ui.VoiceAssistantApp
 import com.solita.pulse.ui.theme.PulseTheme
-import java.util.*
+// Removed UUID import unless needed for something else
 
-class MainActivity : ComponentActivity(), TextToSpeech.OnInitListener {
+class MainActivity : ComponentActivity() { // Removed TextToSpeech.OnInitListener
 
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
-    private lateinit var speechRecognizer: SpeechRecognizer
-    private lateinit var textToSpeech: TextToSpeech
-    private val sessionID: String = UUID.randomUUID().toString()
-
+    // Removed speechRecognizer, textToSpeech, and sessionID variables
+    // private lateinit var speechRecognizer: SpeechRecognizer -> Managed by ViewModel/SpeechManager
+    // private lateinit var textToSpeech: TextToSpeech -> Managed by ViewModel/SpeechManager
+    // private val sessionID: String = UUID.randomUUID().toString() -> Managed by ViewModel or passed differently
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         // Hide the ActionBar (top bar) using Window
+        // Consider using edge-to-edge APIs for modern Android look and feel
         window.requestFeature(Window.FEATURE_NO_TITLE)
 
         // Initialize the permission launcher
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
             if (isGranted) {
-                println("Permission granted")
+                Log.i("MainActivity", "RECORD_AUDIO permission granted.")
+                // You could potentially notify the ViewModel here if needed,
+                // but the Composable/ViewModel can also check permission status itself.
             } else {
-                println("Permission for audio recording is required.")
+                Log.w("MainActivity", "RECORD_AUDIO permission denied.")
+                // Handle permission denial gracefully (e.g., show explanation, disable voice features)
+                // The Composable/ViewModel should react to the permission state.
             }
         }
 
         // Request the permission
         requestPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
 
-        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
-        textToSpeech = TextToSpeech(this, this, "com.google.android.tts")
+        // Removed STT/TTS initialization - ViewModel handles this via SpeechManager
+        // speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this)
+        // textToSpeech = TextToSpeech(this, this, "com.google.android.tts")
 
         setContent {
             PulseTheme {
-                VoiceAssistantApp(context = this, speechRecognizer = speechRecognizer, textToSpeech = textToSpeech, sessionID=sessionID)
+                // VoiceAssistantApp now gets its ViewModel instance internally using viewModel()
+                // No need to pass context, stt, tts, or sessionID anymore.
+                VoiceAssistantApp()
             }
         }
     }
 
-    override fun onInit(status: Int) {
-        if (status == TextToSpeech.SUCCESS) {
-            val langResult = textToSpeech.setLanguage(Locale("fi", "FI"))
-            if (langResult == TextToSpeech.LANG_MISSING_DATA || langResult == TextToSpeech.LANG_NOT_SUPPORTED) {
-                Log.e("TextToSpeech", "Finnish is not supported or missing data.")
-            } else {
-                Log.i("TextToSpeech", "Text-to-Speech initialized successfully for Finnish.")
-            }
-        } else {
-            Log.e("TextToSpeech", "Initialization failed.")
-        }
-    }
+    // Removed onInit - Activity no longer listens for TTS initialization
+    // override fun onInit(status: Int) { ... }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        speechRecognizer.destroy()
-        textToSpeech.shutdown()
-    }
+    // Removed onDestroy - ViewModel's onCleared handles resource release via SpeechManager.release()
+    // override fun onDestroy() {
+    //     super.onDestroy()
+    //     speechRecognizer.destroy()
+    //     textToSpeech.shutdown()
+    // }
 }

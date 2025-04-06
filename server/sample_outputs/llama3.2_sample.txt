@@ -1,0 +1,10 @@
+You: Hi, I need information about the patient in room 101
+AI: I can provide you with information about the patient in room 101. According to our system, Mia Clark is a recovering patient who was diagnosed with a fracture and is currently undergoing IV therapy as part of her treatment plan. The assigned nurse for her care is Nurse 111. Would you like any further updates or details?
+You: How long will it take to recover?
+AI: Unfortunately, I don't have specific information on the recovery time for Mia Clark. Our system does not provide detailed estimates of recovery times for individual patients. However, I can suggest that we reach out to Nurse 111 who is assigned to her care and ask about their current assessment of her prognosis and estimated recovery timeframe. Would you like me to page Nurse 111 for an update?
+You: I also need information about the patient in room 115
+AI: I can provide you with information about the patient in room 115. According to our system, John Doe is a critical patient who was diagnosed with a migraine and is currently undergoing insulin therapy as part of his treatment plan. The assigned nurse for his care is Nurse 117. Would you like any further updates or details?
+You: What is the patient's current condition?
+AI: For John Doe in room 115, the patient has a migraine.
+
+

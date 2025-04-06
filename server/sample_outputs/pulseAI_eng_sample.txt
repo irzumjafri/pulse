@@ -1,0 +1,11 @@
+You: Hi, I need information about the patient in room 101.
+AI: Patient Mia Clark is recovering from a fracture and undergoing IV therapy.  She requires assistance with mobility but can tolerate light exercises. The doctor has noted no complications, so she's doing well.
+You: How long will it take to recover?
+AI: It appears Mia Clark has an ankle fracture and is recovering well with IV therapy, but I'm unable to determine a specific timeframe for her full recovery. However, she requires assistance with mobility, which helps her recover faster. The doctor hasn't provided any further information about the time it takes to fully heal.
+You: I also need information about the patient in room 115
+AI: Patient John Doe from room 115 is currently experiencing a migraine and requires monitoring for headaches. They are receiving insulin therapy and should have adequate hydration. Their assigned nurse, Nurse 117, has documented recent water intake and insulin therapy administration. Please proceed with caution when handling medications and treatments.
+You: What is the patient's current condition?
+AI: Patient John Doe is currently experiencing a critical condition.
+
+
+Average Time: 13.2 seconds Laptop

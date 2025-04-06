@@ -1,0 +1,11 @@
+You: Hi, I need information about the patient in room 101.
+AI: Patient Mia Clark is currently recovering from a fracture and is able to walk fine.  Her ankle was twisted but she is doing well.
+You: How long will it take to recover?
+AI: Mia Clark's fracture is healing well and she can walk fine.  Her recovery time depends on her individual progress but it seems like she's making good headway.
+You: I also need information about the patient in room 115
+AI: John Doe is currently in room 115 and is experiencing critical migraine symptoms. He's being treated with insulin therapy and is under close monitoring for severe headaches and hydration status.  Ensure a quiet and dimly lit environment, administer pain relief as needed, and encourage hydration.
+You: What is the patient's current condition?
+AI: John Doe is currently experiencing critical migraine symptoms. He's under close monitoring and receiving insulin therapy.
+
+
+Average Time: 17.4 seconds Laptop

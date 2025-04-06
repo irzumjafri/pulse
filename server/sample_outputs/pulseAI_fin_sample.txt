@@ -1,0 +1,8 @@
+You: Hei, tarvitsen tietoa potilaasta huoneessa 101
+AI: Olen keskustellut tänään 101 potilaan kanssa, Mia Clarkin kanssa, joka on kuollut.
+You: Kuinka kauan kestää toipua?
+AI: Miu Clarkin reagoivat sairauden hoitoon liittyviin kysymyksiin 10 minuutin sisällä sairaalan poistumisen jälkeen.
+You: Tarvitset myös tietoja potilaasta huoneessa 115
+AI: Potilas 115: John Doe, vakavasti kriittinen tila, Migraania diagnoosi.  Terveystietoja annetaan Nurse-Notes:theme:medication administration
+You: Mikä on potilaan tämänhetkinen tila
+AI: Potilas 115 John Doe on vakavasti kriittinen tila, Diagnoosi Migraine.  Nurse-Notes:theme:medication administration antaa tietoja insulin hoitosta.

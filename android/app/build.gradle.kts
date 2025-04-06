@@ -13,6 +13,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "1.9.22"
 }
 
 android {
@@ -27,7 +28,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "PORCUPINE_ACCESS_KEY", "\"${properties["PORCUPINE_ACCESS_KEY"] ?: ""}\"")
+        val porcupineAccessKey: String = project.findProperty("PORCUPINE_ACCESS_KEY") as? String ?: ""
+        buildConfigField("String", "PORCUPINE_ACCESS_KEY", "\"$porcupineAccessKey\"")
 
     }
 
@@ -60,6 +62,7 @@ android {
 dependencies {
 
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.ui)
     implementation(libs.material3)
     implementation(libs.androidx.core.ktx)
@@ -85,4 +88,7 @@ dependencies {
     implementation (libs.androidx.activity.compose.v172)
     implementation (libs.ui.tooling)
     implementation(libs.porcupine.android)
+    implementation(libs.kotlinx.coroutines.android) // Use the latest version
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.accompanist.permissions)
 }

@@ -1,12 +1,9 @@
 package com.solita.pulse.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.* // Import Column
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator // Import CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,12 +15,19 @@ import androidx.compose.ui.unit.dp
 import com.solita.pulse.models.MessageType
 
 @Composable
-fun ChatBubble(message: String, messageType: MessageType) {
+fun ChatBubble(
+    message: String,
+    messageType: MessageType,
+    // Add new optional parameters
+    isPartial: Boolean = false,
+    isLoading: Boolean = false
+) {
     // Define light and dark mode colors for each message type
     val (lightBubbleColor, darkBubbleColor) = when (messageType) {
-        MessageType.Chat -> Pair(MaterialTheme.colorScheme.primaryContainer,
-            MaterialTheme.colorScheme.primaryContainer)
-
+        MessageType.Chat -> Pair(
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.primaryContainer
+        )
         MessageType.Record -> Pair(
             Color(0xFFFF7A90), Color(0xFF5A202F)
         ) // Light: #FF7A90, Dark: #5A202F
@@ -39,10 +43,26 @@ fun ChatBubble(message: String, messageType: MessageType) {
         lightBubbleColor
     }
 
+    // Use slightly different color/alpha for partial or loading messages if desired
+    val finalBubbleColor = if (isLoading) bubbleColor.copy(alpha = 0.8f) else bubbleColor
+
+    // Determine text color (ensure good contrast) - Consider adjusting based on bubbleColor
+    val textColor: Color = when {
+        messageType == MessageType.Record && !isSystemInDarkTheme() -> Color(0xFF5A202F) // Dark text on light pink
+        messageType == MessageType.Record && isSystemInDarkTheme() -> Color(0xFFFFD9DE) // Light text on dark pink
+        messageType == MessageType.Server && !isSystemInDarkTheme() -> Color.Black.copy(alpha = 0.87f) // Dark text on light gray
+        messageType == MessageType.Server && isSystemInDarkTheme() -> Color.White.copy(alpha = 0.87f) // Light text on dark gray
+        else -> MaterialTheme.colorScheme.onPrimaryContainer // Default for Chat, or adjust as needed
+    }.let { baseColor ->
+        //Partial text Color
+        if (isPartial) baseColor.copy(alpha = 0.7f) else baseColor
+    }
+
+
     // Determine alignment based on message type
     val alignment = when (messageType) {
-        MessageType.Chat, MessageType.Record -> Alignment.CenterEnd // Align chat and record messages to the right
-        MessageType.Server -> Alignment.CenterStart // Align server messages to the left
+        MessageType.Chat, MessageType.Record -> Alignment.CenterEnd
+        MessageType.Server -> Alignment.CenterStart
     }
 
     Box(
@@ -54,16 +74,27 @@ fun ChatBubble(message: String, messageType: MessageType) {
         Surface(
             modifier = Modifier.widthIn(max = 280.dp),
             shape = RoundedCornerShape(12.dp),
-            color = bubbleColor
+            color = finalBubbleColor
         ) {
-
-            Text(
-                text = message,
-                modifier = Modifier.padding(12.dp),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (messageType == MessageType.Chat || messageType == MessageType.Record) MaterialTheme.colorScheme.onSurface
-                else MaterialTheme.colorScheme.onSurface
-            )
+            Row(
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = message,
+                    // Removed modifier here, padding is on Row/Surface
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = textColor
+                )
+                // Conditionally show loading indicator
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp).padding(start = 12.dp),
+                        color = textColor, // Use text color for indicator
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
         }
     }
 }

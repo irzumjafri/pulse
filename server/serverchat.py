@@ -21,7 +21,7 @@ def test_chat():
         
         if response.status_code == 200:
             response_data = response.json()
-            print(f"AI: {response_data.get('response')}")
+            print(f"AI: {response_data.get('response').strip()}")
         else:
             print(f"Error: {response.status_code} - {response.text}")
 

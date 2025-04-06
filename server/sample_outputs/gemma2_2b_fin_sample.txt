@@ -1,0 +1,8 @@
+You: Hei, tarvitsen tietoa potilaasta huoneessa 101
+AI: Potilaan Mia Clarkin tilanne on hyvä.
+You: Kuinka kauan kestää toipua?
+AI: Mia Clarkin hoidoissa on hyvä.  Diagnoosi on rumi, ja hän tarvitsee apua liikkuessaan.
+You: Tarvitset myös tietoja potilaasta huoneessa 115
+AI: Potilaan 115 huoneessa on John Doe. Hänellä on vakavasti sairaus ja hänet hoidetaan migreenille.
+You: Mikä on potilaan tämänhetkinen tila
+AI: John Doe on kriittinen tila. Hänellä on vakavasti sairaus ja hän hoidetaan migreenille.
