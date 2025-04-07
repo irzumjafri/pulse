@@ -1359,18 +1359,3 @@ if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
     cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
     cleanup_thread.start()
     print("Background cleanup thread initiated.")
-
-# # --- Main Execution ---
-# if __name__ == '__main__':
-#     # Start the background cleanup thread only when running the main script
-#     if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-#         cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
-#         cleanup_thread.start()
-#         print("Background cleanup thread initiated.")
-#     else:
-#          print("Skipping background thread start in Flask debug reload process.")
-
-#     # Start the Flask development server
-#     # Host '0.0.0.0' makes it accessible on the network
-#     # Choose a port (e.g., 5001)
-#     app.run(host='0.0.0.0', port=5000, debug=False) # Turn debug=False for production or when threads are critical
