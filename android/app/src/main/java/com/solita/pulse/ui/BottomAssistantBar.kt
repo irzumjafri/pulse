@@ -40,7 +40,6 @@ fun BottomAssistantBar(
     // Determine states based on listeningState
     val isIdle = listeningState == 0
     val isChatListening = listeningState == 1
-    val isRecordListening = listeningState == 2
 
     // Adjust alpha based on enabled state for visual feedback
     val contentAlpha = if (enabled) 1f else 0.5f

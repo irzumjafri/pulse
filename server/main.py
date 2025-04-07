@@ -78,7 +78,7 @@ Here are the patient details: {patient_details}
 
 Here is the patient note that was just recorded: {patient_note}
 
-Confirm that the patient note has been recorded successfully and generate a confirmation message to keep the flow of the conversation going naturally.
+Generate a short confirmation message to keep the flow of the conversation going naturally.
 
 * Always use patient's name when referring to them, and never their ID or SSN.
 
@@ -869,6 +869,7 @@ def process_record(data: Dict[str, Any], request_id: str, handsfree: bool) -> Di
 
         # --- Prepare Final Response ---
         final_response_string = str(record_result) # Confirmation message from LLM
+        final_response_string = "The following note was recorded:\n" + patient_note + ". " + final_response_string # Prepend confirmation message
 
         # --- Handsfree Prefix Modification ---
         if handsfree:
@@ -1354,17 +1355,22 @@ def test():
     return jsonify({"message": "Server is running!", "timestamp": datetime.datetime.now().isoformat()}), 200
 
 
-# --- Main Execution ---
-if __name__ == '__main__':
-    # Start the background cleanup thread only when running the main script
-    if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
-        cleanup_thread.start()
-        print("Background cleanup thread initiated.")
-    else:
-         print("Skipping background thread start in Flask debug reload process.")
+if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+    cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
+    cleanup_thread.start()
+    print("Background cleanup thread initiated.")
 
-    # Start the Flask development server
-    # Host '0.0.0.0' makes it accessible on the network
-    # Choose a port (e.g., 5001)
-    app.run(host='0.0.0.0', port=5001, debug=False) # Turn debug=False for production or when threads are critical
+# # --- Main Execution ---
+# if __name__ == '__main__':
+#     # Start the background cleanup thread only when running the main script
+#     if not app.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+#         cleanup_thread = threading.Thread(target=background_cleanup, daemon=True)
+#         cleanup_thread.start()
+#         print("Background cleanup thread initiated.")
+#     else:
+#          print("Skipping background thread start in Flask debug reload process.")
+
+#     # Start the Flask development server
+#     # Host '0.0.0.0' makes it accessible on the network
+#     # Choose a port (e.g., 5001)
+#     app.run(host='0.0.0.0', port=5000, debug=False) # Turn debug=False for production or when threads are critical

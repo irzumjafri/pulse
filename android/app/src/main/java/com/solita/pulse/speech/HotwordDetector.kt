@@ -5,8 +5,7 @@ import ai.picovoice.porcupine.PorcupineManager
 import ai.picovoice.porcupine.PorcupineManagerCallback
 import android.content.Context
 import android.util.Log
-import com.solita.pulse.BuildConfig // For Access Key
-import com.solita.pulse.R // For keyword resources
+import com.solita.pulse.R
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException

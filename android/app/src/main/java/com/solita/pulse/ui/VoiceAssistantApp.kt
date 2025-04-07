@@ -26,17 +26,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel // Required dependency
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import com.solita.pulse.models.MessageType // Adjust import if needed
-// Removed direct NetworkUtils/SpeechManager imports
-// import com.solita.pulse.speech.HotwordDetector // Keep if using hotword (ViewModel handles now)
+import com.solita.pulse.models.MessageType
 import kotlinx.coroutines.flow.collectLatest
 import java.util.Locale
 
@@ -49,7 +45,6 @@ fun VoiceAssistantApp(
     // --- State Collection ---
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
-    val context = LocalContext.current // Get context if needed
 
     // State for text input in secure mode
     var customMessage by remember { mutableStateOf("") }
@@ -217,7 +212,6 @@ fun VoiceAssistantApp(
             // --- Main Content Area (Instructions or Chat Area) ---
             // Determine which main content to show based on state
             val showInstructions = uiState.chatHistory.isEmpty() && !uiState.isListening && !uiState.isLoading
-            val showChatArea = !showInstructions && !uiState.isLoading
 
             // Use Box to occupy the space, switching content inside
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
@@ -258,7 +252,7 @@ fun VoiceAssistantApp(
                                 color = MaterialTheme.colorScheme.onBackground,
                                 textAlign = TextAlign.Center
                             )
-                        } else if (canUseVoice && uiState.isSecurityModeActive) {
+                        } else if (canUseVoice) {
                             Text(
                                 text = if (uiState.selectedLocale.language == "fi") {
                                     "Turvatila: Käytä tekstinsyöttöä."
@@ -285,18 +279,6 @@ fun VoiceAssistantApp(
                             )
                         }
                         // --- End Instruction Hint Logic ---
-
-
-                        // Display Error messages in instruction view
-                        uiState.error?.let { errorMsg ->
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Text(
-                                text = errorMsg,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center
-                            )
-                        }
                         // --- >> ADD HELP BUTTON HERE << ---
                         Spacer(modifier = Modifier.height(24.dp)) // Add some space before the button
                         Button(onClick = { showHelpDialog = true }) { // Set state to true on click
@@ -305,7 +287,7 @@ fun VoiceAssistantApp(
                         // ----------------------------------
                     } // End Instructions Column
 
-                } else if (showChatArea) {
+                } else {
                     // Chat Area (Contains LazyColumn)
                     // Displayed if history is non-empty OR if listening has started
                     Column(modifier = Modifier.fillMaxSize()) { // Fill the Box
@@ -354,7 +336,7 @@ fun VoiceAssistantApp(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
                                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                                     ),
-                                    enabled = !uiState.isLoading && !uiState.isProcessingNetwork,
+                                    enabled = !uiState.isProcessingNetwork,
                                     onClick = { viewModel.clearChatAndContext() },
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
@@ -408,17 +390,6 @@ fun VoiceAssistantApp(
                                 }
                             }
                         } // End LazyColumn
-
-                        // Display Error messages if chat area is visible
-                        uiState.error?.let { errorMsg ->
-                            Text(
-                                text = errorMsg,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
-                            )
-                        }
 
                     } // End Chat Area Column
                 } // End if/else for main content

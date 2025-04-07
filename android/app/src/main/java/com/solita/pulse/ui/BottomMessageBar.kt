@@ -76,14 +76,11 @@ fun BottomMessageBar(
                 .fillMaxWidth()
                 .padding(start = 16.dp, end = 16.dp, top = 0.dp, bottom = 8.dp), // Adjusted padding
             verticalAlignment = Alignment.CenterVertically // Align items vertically
-            // Removed Arrangement.SpaceBetween, rely on weight and Spacer
         ) {
             TextField(
                 value = customMessage,
                 onValueChange = onMessageChange,
                 label = { Text(textFieldLabel) },
-                // Use OutlinedTextField style for better visual separation?
-                // Or customize TextFieldColors further
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f), // Subtle background
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
@@ -120,6 +117,3 @@ fun BottomMessageBar(
         }
     }
 }
-
-// Make sure ContentAlpha is imported if needed, or use MaterialTheme colors directly
-// import androidx.compose.material.ContentAlpha

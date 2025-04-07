@@ -52,14 +52,6 @@ class SpeechManager(
 
     // --- Public Methods ---
 
-    fun setListener(listener: SpeechEventListener?) {
-        this.listener = listener
-        // If TTS is already ready, notify the new listener
-        if (isTtsInitialized && listener != null) {
-            mainThreadHandler.post { listener.onTtsReady() }
-        }
-    }
-
     fun initializeRecognizer() {
         mainThreadHandler.post {
             if (speechRecognizer == null) {
