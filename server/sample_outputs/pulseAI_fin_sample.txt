@@ -6,3 +6,6 @@ You: Tarvitset myös tietoja potilaasta huoneessa 115
 AI: Potilas John Doe, huoneessa 115, on kriittisessä tilassa ja hänellä on migreeni. Hänellä on allergia penisilliinille. Tarkkaile voimakkaita päänsärkyjä ja varmista hiljainen, himmeä huone.
 You: Mikä on potilaan tämänhetkinen tila
 AI: Potilas John Doe on kriittisessä tilassa ja hänellä on migreeni.
+
+
+
