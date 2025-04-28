@@ -17,7 +17,7 @@ from typing import Dict, Any, Optional, Tuple, List # For type hinting
 # --- Configuration Constants ---
 PATIENT_DATA_PATH = "patient_data.csv"
 NURSE_NOTES_PATH = "nurse_notes.csv"
-OLLAMA_MODEL_NAME = "irzumbm/pulseAITiny" # Specify the Ollama model to use
+OLLAMA_MODEL_NAME = "gemma3:4b" # Specify the Ollama model to use
 MAX_WORKERS = 5 # Max concurrent requests processed by the thread pool
 CLEANUP_INTERVAL_SECONDS = 120 # How often the background cleanup runs (2 minutes)
 STALE_REQUEST_THRESHOLD_SECONDS = 300 # How long completed/errored requests stay before cleanup (5 minutes)
@@ -43,6 +43,11 @@ active_requests_lock = threading.Lock()
 
 # --- Model and Prompt Templates ---
 # Template for general chat interactions, focusing on context and patient info
+
+systemInsructions = """
+Your name is Pulse AI and you are a fellow digital nurse at all hospitals. Your main task is to help in summarizing and sharing patient data. You are a voice assistant that helps with managing workforce, providing important updates on patients and taking notes. Always keep your answer short and talk like a human would in a natural conversation.
+"""
+
 chatTemplate = """
 Answer the question below, prioritizing information from the provided context. If you must provide information outside the context, explicitly state that it is not from the provided data. Do not fabricate information.
 Current Time: {current_time}
@@ -109,9 +114,18 @@ try:
     print(f"Ollama LLM initialized successfully with model: {OLLAMA_MODEL_NAME}")
 
     # Create LangChain chains using the initialized model and prompts
-    chatPrompt = ChatPromptTemplate.from_template(chatTemplate)
-    recordPrompt = ChatPromptTemplate.from_template(recordingTemplate)
-    nurseNotesPrompt = ChatPromptTemplate.from_template(nurseNotesTemplate)
+    chatPrompt = ChatPromptTemplate.from_messages([
+        ("system", systemInsructions),
+        ("human", chatTemplate)
+    ])
+    recordPrompt = ChatPromptTemplate.from_messages([
+        ("system", systemInsructions),
+        ("human", recordingTemplate)
+    ])
+    nurseNotesPrompt = ChatPromptTemplate.from_messages([
+        ("system", systemInsructions),
+        ("human", nurseNotesTemplate)
+    ])
     chatChain = chatPrompt | model
     nurseNotesChain = nurseNotesPrompt | model
     recordChain = recordPrompt | model

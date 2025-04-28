@@ -70,7 +70,7 @@ Given the list of these notes, group the notes by a common theme, and based on t
 Response:
 """
 
-model = OllamaLLM(model="irzumbm/pulseAITiny", max_tokens=30)
+model = OllamaLLM(model="gemma3:4b", max_tokens=30)
 chatPrompt = ChatPromptTemplate.from_template(chatTemplate)
 recordPrompt = ChatPromptTemplate.from_template(recordingTemplate)
 nurseNotesPrompt = ChatPromptTemplate.from_template(nurseNotesTemplate)
